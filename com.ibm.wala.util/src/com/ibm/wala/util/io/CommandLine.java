@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.ibm.wala.util.io;
 
+import java.io.File;
 import java.util.Properties;
 
 /**
@@ -47,7 +48,55 @@ public class CommandLine {
         }
       }
     }
+
+    /**
+     * 
+     * added by Yifei
+     * 
+     * add an option -jarDir. read all the jar files from given root directory
+     * 
+     * */
+    for(int i = 0; i < args.length; i++) {
+      if(args[i] == null) {
+        continue;
+      }
+      if(args[i].contains("jarDir")) {
+        String key = parseForKey(args[i]);
+        if(key != null) {
+          String root = null;
+          if(args[i].contains("=")) {
+            root = args[i].substring(args[i].indexOf('=') + 1);
+          } else {
+            if ((i + 1) >= args.length || args[i + 1].charAt(0) == '-') {
+              throw new IllegalArgumentException("Malformed command-line.  Must be of form -key=value or -key value");
+            }
+            root = args[i + 1];
+            ++i;
+            String jarFiles = processDir(root);
+            System.out.println(jarFiles);
+            result.put("appJar", jarFiles);
+            break;
+          }
+        }
+      }
+    }
     return result;
+  }
+
+  private static String processDir(String root) {
+    System.err.println(root);
+    File rootFile = new File(root);
+    StringBuffer jarFiles = new StringBuffer();
+    File[] files = rootFile.listFiles();
+    int count = 0;
+    for(File f : files) {
+      if(f.getName().endsWith(".jar")) {
+        ++count;
+        jarFiles.append(f.getAbsolutePath()).append(File.pathSeparatorChar);
+      }
+    }
+    System.err.println("Found " + count + " jar files.");
+    return jarFiles.substring(0, jarFiles.length() - 1).toString();
   }
 
   /**

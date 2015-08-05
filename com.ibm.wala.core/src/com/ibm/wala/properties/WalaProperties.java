@@ -84,6 +84,7 @@ public final class WalaProperties {
 
   public static String[] getJarsInDirectory(String dir) {
     File f = new File(dir);
+    System.err.println("Using JRE in directory " + dir);
     Assertions.productionAssertion(f.isDirectory(), "not a directory: " + dir);
     Collection<File> col = FileUtil.listFiles(dir, ".*\\.jar$", true);
     String[] result = new String[col.size()];

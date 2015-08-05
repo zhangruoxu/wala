@@ -110,6 +110,9 @@ public class PDFCallGraph {
     try {
       Graph<CGNode> g = buildPrunedCallGraph(appJar, (new FileProvider()).getFile(exclusionFile));
 
+      for(CGNode node : g) {
+        System.out.println(node);
+      }
       Properties p = null;
       try {
         p = WalaExamplesProperties.loadProperties();
@@ -151,18 +154,21 @@ public class PDFCallGraph {
 
     Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha);
     AnalysisOptions options = new AnalysisOptions(scope, entrypoints);
-
+    System.err.println(options.getReflectionOptions());
     // //
     // build the call graph
     // //
-    com.ibm.wala.ipa.callgraph.CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
+    //com.ibm.wala.ipa.callgraph.CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
+    com.ibm.wala.ipa.callgraph.CallGraphBuilder builder = Util.makeZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+    //com.ibm.wala.ipa.callgraph.CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+    //com.ibm.wala.ipa.callgraph.CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
     CallGraph cg = builder.makeCallGraph(options, null);
 
     System.err.println(CallGraphStats.getStats(cg));
 
     Graph<CGNode> g = pruneForAppLoader(cg);
-
     return g;
+    //return cg;
   }
 
   public static Graph<CGNode> pruneForAppLoader(CallGraph g) throws WalaException {

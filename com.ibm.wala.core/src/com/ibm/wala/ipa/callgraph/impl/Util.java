@@ -398,7 +398,8 @@ public class Util {
    */
   public static SSAPropagationCallGraphBuilder makeVanillaZeroOneCFABuilder(AnalysisOptions options, AnalysisCache cache,
       IClassHierarchy cha, AnalysisScope scope) {
-    return makeVanillaZeroOneCFABuilder(options, cache, cha, scope, null, null);
+    SSAContextInterpreter interpreter = null;
+    return makeVanillaZeroOneCFABuilder(options, cache, cha, scope, null, interpreter);
   }
 
   /**

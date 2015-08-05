@@ -11,6 +11,7 @@
 package com.ibm.wala.ipa.callgraph.propagation;
 
 
+import com.ibm.wala.fixedpoint.impl.Worklist;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.MonitorUtil.IProgressMonitor;
 

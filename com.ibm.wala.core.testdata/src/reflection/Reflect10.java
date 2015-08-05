@@ -21,6 +21,8 @@ public class Reflect10 {
       IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException {
     Class c = Class.forName("java.lang.Integer");
     Method[] m = c.getMethods();
+    System.out.println("Number of methos: " + m.length);
+    System.out.println(m[0].getName());
     m[0].invoke(new Integer(2), new Object[] {});
   }
 }

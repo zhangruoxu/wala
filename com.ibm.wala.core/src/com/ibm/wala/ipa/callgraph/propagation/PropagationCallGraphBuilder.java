@@ -226,6 +226,7 @@ public abstract class PropagationCallGraphBuilder implements CallGraphBuilder {
     if (options == null) {
       throw new IllegalArgumentException("options is null");
     }
+   
     system = makeSystem(options);
 
     if (DEBUG_GENERAL) {
@@ -266,6 +267,7 @@ public abstract class PropagationCallGraphBuilder implements CallGraphBuilder {
     customInit();
 
     solver = makeSolver();
+    
     try {
       solver.solve(monitor);
     } catch (CancelException e) {
@@ -288,7 +290,7 @@ public abstract class PropagationCallGraphBuilder implements CallGraphBuilder {
   protected abstract IPointsToSolver makeSolver();
 
   /**
-   * A warning for when we fail to resolve a call to an entrypoint
+   * A warning for when we fail to resolve a call to an entry point
    */
   private static class EntrypointResolutionWarning extends Warning {
 
@@ -334,6 +336,7 @@ public abstract class PropagationCallGraphBuilder implements CallGraphBuilder {
       discoveredNodes = HashSetFactory.make();
       while (it.hasNext()) {
         CGNode n = it.next();
+        // SSAPropagationCallGraphBuilder
         result |= addConstraintsFromNode(n, monitor);
       }
     }

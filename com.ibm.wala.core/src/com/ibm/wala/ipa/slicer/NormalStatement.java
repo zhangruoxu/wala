@@ -39,7 +39,7 @@ public class NormalStatement extends StatementWithInstructionIndex {
         name = name + "]: ";
       }
     }
-
+    getInstruction().toString();
     return "NORMAL " + getNode().getMethod().getName() + ":" + name + getInstruction().toString() + " " + getNode();
   }
 

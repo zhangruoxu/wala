@@ -22,9 +22,14 @@ public class Reflect23 {
   public static void main(String[] args) throws ClassNotFoundException, SecurityException,
       NoSuchMethodException, IllegalAccessException, InstantiationException,
       IllegalArgumentException, InvocationTargetException {
-    Class helperClass = Class.forName("reflection.Helper");
+    Class<?> helperClass = Class.forName("reflection.Helper");
     Object helperObject = helperClass.newInstance();
-    Method[] methods = helperClass.getDeclaredMethods();
+    
+    Method m = helperClass.getMethod("u", Integer.class);
+    
+    m.invoke(helperObject, new Integer(1));
+    
+    /*Method[] methods = helperClass.getDeclaredMethods();
     for (Method m : methods) {
       if (m.getParameterTypes().length == 1) {
         Class paramType = m.getParameterTypes()[0];
@@ -35,6 +40,6 @@ public class Reflect23 {
           break;
         }
       }
-    }
+    }*/
   }
 }

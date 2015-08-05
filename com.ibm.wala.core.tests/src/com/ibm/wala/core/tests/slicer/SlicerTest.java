@@ -23,6 +23,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.ibm.wala.classLoader.IMethod;
+import com.ibm.wala.classLoader.ShrikeBTMethod;
 import com.ibm.wala.core.tests.callGraph.CallGraphTestUtil;
 import com.ibm.wala.core.tests.util.TestConstants;
 import com.ibm.wala.examples.drivers.PDFSlice;
@@ -46,6 +48,7 @@ import com.ibm.wala.ipa.slicer.Slicer.ControlDependenceOptions;
 import com.ibm.wala.ipa.slicer.Slicer.DataDependenceOptions;
 import com.ibm.wala.ipa.slicer.Statement;
 import com.ibm.wala.ipa.slicer.thin.ThinSlicer;
+import com.ibm.wala.shrikeCT.InvalidClassFileException;
 import com.ibm.wala.ssa.IR;
 import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
 import com.ibm.wala.ssa.SSAAbstractThrowInstruction;
@@ -372,7 +375,7 @@ public class SlicerTest {
     dumpSlice(slice);
     Assert.assertEquals(slice.toString(), 1, countConditionals(slice));
   }
-  
+
   @Test
   public void testTestCD5() throws ClassHierarchyException, IllegalArgumentException, CancelException, IOException {
     AnalysisScope scope = findOrCreateAnalysisScope();
@@ -848,7 +851,7 @@ public class SlicerTest {
   }
 
   public static void dumpSlice(Collection<Statement> slice) {
-    dumpSlice(slice, new PrintWriter(System.err));
+    dumpSlice(slice, new PrintWriter(System.out));
   }
 
   public static void dumpSlice(Collection<Statement> slice, PrintWriter w) {
@@ -861,10 +864,11 @@ public class SlicerTest {
     }
   }
 
-  public static void dumpSliceToFile(Collection<Statement> slice, String fileName) throws FileNotFoundException {
+  public static void dumpSliceToFile(Collection<Statement> slice, String fileName, Statement creteria) throws FileNotFoundException {
     File f = new File(fileName);
     FileOutputStream fo = new FileOutputStream(f);
     PrintWriter w = new PrintWriter(fo);
+    w.println(creteria);
     dumpSlice(slice, w);
   }
 
@@ -907,6 +911,45 @@ public class SlicerTest {
     }
     System.err.println("call graph " + cg);
     Assertions.UNREACHABLE("failed to find method " + name);
+    return null;
+  }
+
+  public static Statement findCallee(CallGraph cg, String callerName, String calleeName, int calleeLineNumber) {
+    Atom a = Atom.findOrCreateUnicodeAtom(callerName);
+    for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
+      CGNode node = nodeIter.next();
+      if(node.getMethod().getName().equals(a)) {
+        System.out.println("Caller found " + calleeName);
+        IR ir = node.getIR();
+        for(Iterator<SSAInstruction> instIter = ir.iterateAllInstructions(); instIter.hasNext(); ) {
+          SSAInstruction inst = instIter.next();
+          if(inst instanceof SSAInvokeInstruction) {
+            SSAInvokeInstruction callee = (SSAInvokeInstruction)inst;
+            if(callee.getCallSite().getDeclaredTarget().getName().toString().equals(calleeName)) {
+              IntSet indices = ir.getCallInstructionIndices(callee.getCallSite());
+              Assertions.productionAssertion(indices.size() == 1, "expected 1 but got " + indices.size());
+              try {
+                int bcIndex = ((ShrikeBTMethod)node.getMethod()).getBytecodeIndex(indices.intIterator().next());
+                int lineNumber = node.getMethod().getLineNumber(bcIndex);
+                if(calleeLineNumber == 0 || calleeLineNumber == lineNumber) {
+                  System.err.println("####### caller method " + node.getMethod());
+                  System.err.println("####### line number " + lineNumber);
+                  return new NormalStatement(node, indices.intIterator().next());
+                } else {
+                  continue;
+                }
+              } catch (InvalidClassFileException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                System.err.println("No line number");
+              }
+              return new NormalStatement(node, indices.intIterator().next());
+            }
+          }
+        }
+      }
+    }
+    Assertions.UNREACHABLE("failed to find call to " + calleeName);
     return null;
   }
 

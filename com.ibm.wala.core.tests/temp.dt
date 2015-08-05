@@ -1,0 +1,17 @@
+digraph "DirectedGraph" {
+graph [concentrate = true];center=true;fontsize=6;node [ color=blue,shape="box"fontsize=6,fontcolor=black,fontname=Arial];edge [ color=black,fontsize=6,fontcolor=black,fontname=Arial]; 
+   "Node: synthetic < Primordial, Lcom/ibm/wala/FakeRootClass, fakeRootMethod()V > Context: Everywhere" [ ]
+   "Node: < Application, LTest, main([Ljava/lang/String;)V > Context: Everywhere" [ ]
+   "Node: synthetic  factory < Primordial, Ljava/lang/Class, newInstance()Ljava/lang/Object; > Context: JavaTypeContext<point: <Application,LA>>" [ ]
+   "Node: < Application, LA, <init>()V > Context: Everywhere" [ ]
+   "Node: < Primordial, Ljava/lang/reflect/Method, invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; > Context: ReceiverInstanceContext<[ConstantKey:< Application, LA, foo(II)I >:class com.ibm.wala.classLoader.ShrikeCTMethod]>" [ ]
+   "Node: < Application, LA, foo(II)I > Context: Everywhere" [ ]
+   "Node: < Application, LA, bar(DD)D > Context: Everywhere" [ ]
+ "Node: synthetic < Primordial, Lcom/ibm/wala/FakeRootClass, fakeRootMethod()V > Context: Everywhere" -> "Node: < Application, LTest, main([Ljava/lang/String;)V > Context: Everywhere" 
+ "Node: < Application, LTest, main([Ljava/lang/String;)V > Context: Everywhere" -> "Node: synthetic  factory < Primordial, Ljava/lang/Class, newInstance()Ljava/lang/Object; > Context: JavaTypeContext<point: <Application,LA>>" 
+ "Node: < Application, LTest, main([Ljava/lang/String;)V > Context: Everywhere" -> "Node: < Primordial, Ljava/lang/reflect/Method, invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; > Context: ReceiverInstanceContext<[ConstantKey:< Application, LA, foo(II)I >:class com.ibm.wala.classLoader.ShrikeCTMethod]>" 
+ "Node: synthetic  factory < Primordial, Ljava/lang/Class, newInstance()Ljava/lang/Object; > Context: JavaTypeContext<point: <Application,LA>>" -> "Node: < Application, LA, <init>()V > Context: Everywhere" 
+ "Node: < Primordial, Ljava/lang/reflect/Method, invoke(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object; > Context: ReceiverInstanceContext<[ConstantKey:< Application, LA, foo(II)I >:class com.ibm.wala.classLoader.ShrikeCTMethod]>" -> "Node: < Application, LA, foo(II)I > Context: Everywhere" 
+ "Node: < Application, LA, foo(II)I > Context: Everywhere" -> "Node: < Application, LA, bar(DD)D > Context: Everywhere" 
+
+}

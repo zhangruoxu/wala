@@ -96,6 +96,14 @@ public abstract class AbstractFixedPointSolver<T extends IVariable<?>> implement
    */
   protected Worklist workList = new Worklist();
 
+  /*
+   * Added by Yifei
+   * */
+  
+  public Worklist getWorkList() {
+    return workList;
+  }
+  
   /**
    * A boolean which is initially true, but set to false after the first call to solve();
    */
@@ -130,20 +138,17 @@ public abstract class AbstractFixedPointSolver<T extends IVariable<?>> implement
   @Override
   @SuppressWarnings("unchecked")
   public boolean solve(IProgressMonitor monitor) throws CancelException {
-
     boolean globalChange = false;
-
     if (firstSolve) {
       initForFirstSolve();
     }
-
     while (!workList.isEmpty()) {
       MonitorUtil.throwExceptionIfCanceled(monitor);
       orderStatements();
 
       // duplicate insertion detection
       AbstractStatement s = workList.takeStatement();
-
+      
       if (DEBUG) {
         System.err.println(("Before evaluation " + s));
       }

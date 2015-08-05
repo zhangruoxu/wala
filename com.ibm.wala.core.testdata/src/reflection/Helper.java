@@ -60,4 +60,7 @@ public class Helper {
     System.out.println("u method invoked");
   }
   
+  public void foo(int x) {
+    
+  } 
 }

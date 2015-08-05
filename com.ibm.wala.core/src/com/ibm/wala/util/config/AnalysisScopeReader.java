@@ -96,6 +96,8 @@ public class AnalysisScopeReader {
       }
     }
 
+    //System.err.println(scope);
+    
     return scope;
   }
 

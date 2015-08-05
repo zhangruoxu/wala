@@ -28,9 +28,12 @@ import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
 import com.ibm.wala.ipa.callgraph.CGNode;
 import com.ibm.wala.ipa.callgraph.CallGraph;
+import com.ibm.wala.ipa.callgraph.CallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.Context;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
+import com.ibm.wala.ipa.callgraph.AnalysisOptions.ReflectionOptions;
 import com.ibm.wala.ipa.callgraph.impl.Everywhere;
+import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.callgraph.propagation.ConstantKey;
 import com.ibm.wala.ipa.callgraph.propagation.ReceiverInstanceContext;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
@@ -122,6 +125,7 @@ public class ReflectionTest extends WalaTestCase {
     TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Ljava/lang/Integer");
     MethodReference mr = MethodReference.findOrCreate(tr, "<clinit>", "()V");
     Set<CGNode> nodes = cg.getNodes(mr);
+    System.out.println(nodes.size());
     Assert.assertFalse(nodes.isEmpty());
   }
 
@@ -357,11 +361,198 @@ public class ReflectionTest extends WalaTestCase {
         TestConstants.REFLECT9_MAIN);
     AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
     CallGraph cg = CallGraphTestUtil.buildZeroOneCFA(options, new AnalysisCache(), cha, scope, false);
-    TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Primordial, "Ljava/lang/Integer");
-    MethodReference mr = MethodReference.findOrCreate(tr, "toString", "()Ljava/lang/String;");
+//    TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Primordial, "Ljava/lang/Integer");
+//    MethodReference mr = MethodReference.findOrCreate(tr, "toString", "()Ljava/lang/String;");
+    TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Lreflection/A");
+    MethodReference mr = MethodReference.findOrCreate(tr, "foo", "()V");
     Set<CGNode> nodes = cg.getNodes(mr);
+    System.out.println(nodes.size());
     Assert.assertFalse(nodes.isEmpty());
   }
+
+  public void verify(CallGraph cg) {
+    TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Lreflection/C");
+    MethodReference aMr = MethodReference.findOrCreate(tr, "foo", "()V");
+    MethodReference bMr = MethodReference.findOrCreate(tr, "bar", "()V");
+    MethodReference cMr = MethodReference.findOrCreate(tr, "foo", "(I)V");
+    MethodReference dMr = MethodReference.findOrCreate(tr, "bar", "(I)V");
+    MethodReference eMr = MethodReference.findOrCreate(tr, "foo", "(Ljava/lang/String;)V");
+    MethodReference fMr = MethodReference.findOrCreate(tr, "bar", "(Ljava/lang/String;)V");
+    MethodReference gMr = MethodReference.findOrCreate(tr, "foo", "(Ljava/lang/String;Ljava/lang/String;)V");
+    MethodReference hMr = MethodReference.findOrCreate(tr, "bar", "(Ljava/lang/String;Ljava/lang/String;)V");
+    //MethodReference xMr = MethodReference.findOrCreate(tr, "x", "()V");
+    //MethodReference yMr = MethodReference.findOrCreate(tr, "y", "()V");
+    //MethodReference initMr = MethodReference.findOrCreate(tr, "<init>", "()V");
+    Set<CGNode> aNodes = cg.getNodes(aMr);
+    Set<CGNode> bNodes = cg.getNodes(bMr);
+    Set<CGNode> cNodes = cg.getNodes(cMr);
+    Set<CGNode> dNodes = cg.getNodes(dMr);
+    Set<CGNode> eNodes = cg.getNodes(eMr);
+    Set<CGNode> fNodes = cg.getNodes(fMr);
+    Set<CGNode> gNodes = cg.getNodes(gMr);
+    Set<CGNode> hNodes = cg.getNodes(hMr);
+    //Set<CGNode> xNodes = cg.getNodes(xMr);
+    //Set<CGNode> yNodes = cg.getNodes(yMr);
+    //Set<CGNode> initNodes = cg.getNodes(initMr);
+    
+    if(!aNodes.isEmpty()) {
+      System.out.println("Find target C.foo(), target number " + aNodes.size());
+    } else {
+      System.out.println("Does not find C.foo()");
+    }
+    if(!bNodes.isEmpty()) {
+      System.out.println("Find target C.bar(), target number " + bNodes.size());
+    } else {
+      System.out.println("Does not find C.bar()");
+    }
+    if(!cNodes.isEmpty()) {
+      System.out.println("Find target C.foo(I), target number " + cNodes.size());
+    } else {
+      System.out.println("Does not find C.foo(I)");
+    }
+    if(!dNodes.isEmpty()) {
+      System.out.println("Find target C.bar(I), target number " + dNodes.size());
+    } else {
+      System.out.println("Does not find C.bar(I)");
+    }
+    if(!eNodes.isEmpty()) {
+      System.out.println("Find target C.foo(Ljava/lang/String;), target number " + eNodes.size());
+    } else {
+      System.out.println("Does not find C.foo(Ljava/lang/String;)");
+    }
+    if(!fNodes.isEmpty()) {
+      System.out.println("Find target C.bar(Ljava/lang/String;), target number " + fNodes.size());
+    } else {
+      System.out.println("Does not find C.bar(Ljava/lang/String;)");
+    }
+    
+    if(!gNodes.isEmpty()) {
+      System.out.println("Find target C.foo(Ljava/lang/String;Ljava/lang/String;), target number " + gNodes.size());
+    } else {
+      System.out.println("Does not find C.foo(Ljava/lang/String;Ljava/lang/String;)");
+    }
+    if(!hNodes.isEmpty()) {
+      System.out.println("Find target C.bar(Ljava/lang/String;Ljava/lang/String;), target number " + hNodes.size());
+    } else {
+      System.out.println("Does not find C.bar(Ljava/lang/String;Ljava/lang/String;)");
+    }
+    
+    /*if(!xNodes.isEmpty()) {
+      System.out.println("Find target C.foo(), target number " + xNodes.size());
+    } else {
+      System.out.println("Does not find C.foo()");
+    }
+    if(!yNodes.isEmpty()) {
+      System.out.println("Find target C.y(), target number " + yNodes.size());
+    } else {
+      System.out.println("Does not find C.y()");
+    }
+    if(!initNodes.isEmpty()) {
+      System.out.println("Find target A.<init>(), target number " + initNodes.size());
+    } else {
+      System.out.println("Does not find A.<init>()");
+    }*/
+  }
+  
+  /*
+   * Test reflection target resolution
+   * Class name:  constant
+   * Method name: constant
+   * */
+  @Test
+  public void testReflect24() throws WalaException, IllegalArgumentException, CancelException, IOException {
+    AnalysisScope scope = findOrCreateAnalysisScope();
+    IClassHierarchy cha = findOrCreateCHA(scope);
+    Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect24");
+    AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+    options.setReflectionOptions(ReflectionOptions.NO_METHOD_INVOKE);
+    CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+    CallGraph cg = builder.makeCallGraph(options, null);
+    verify(cg);
+  }
+  
+  /*
+   * Test unknown target method name
+   * Class name:  constant
+   * Method name: read from file
+   * 
+   * */
+ @Test
+ public void testReflect25() throws WalaException, IllegalArgumentException, CancelException, IOException {
+   AnalysisScope scope = findOrCreateAnalysisScope();
+   IClassHierarchy cha = findOrCreateCHA(scope);
+   Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect25");
+   AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+   CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+   CallGraph cg = builder.makeCallGraph(options, null);
+   verify(cg);
+ }
+ 
+ /*
+  * Test whether parameters is taken into target resolution
+  * Class name:  constant
+  * static method
+  * */
+@Test
+public void testReflect26() throws WalaException, IllegalArgumentException, CancelException, IOException {
+  AnalysisScope scope = findOrCreateAnalysisScope();
+  IClassHierarchy cha = findOrCreateCHA(scope);
+  Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect26");
+  AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+  CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+  CallGraph cg = builder.makeCallGraph(options, null);
+  verify(cg);
+}
+
+@Test
+public void testReflect27() throws WalaException, IllegalArgumentException, CancelException, IOException {
+  AnalysisScope scope = findOrCreateAnalysisScope();
+  IClassHierarchy cha = findOrCreateCHA(scope);
+  Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect27");
+  AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+  CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+  CallGraph cg = builder.makeCallGraph(options, null);
+  verify(cg);
+}
+
+@Test
+public void testReflect28() throws WalaException, IllegalArgumentException, CancelException, IOException {
+  AnalysisScope scope = findOrCreateAnalysisScope();
+  IClassHierarchy cha = findOrCreateCHA(scope);
+  Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect28");
+  AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+  CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+  CallGraph cg = builder.makeCallGraph(options, null);
+  TypeReference baseTr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Lreflection/A");
+  TypeReference childTr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Lreflection/B");
+  MethodReference baseMr = MethodReference.findOrCreate(baseTr, "a", "()V");
+  MethodReference childMr = MethodReference.findOrCreate(childTr, "a", "()V");
+  Set<CGNode> baseNodes = cg.getNodes(baseMr);
+  Set<CGNode> childNodes = cg.getNodes(childMr);
+  if(!baseNodes.isEmpty()) {
+    System.out.println("Find target A.a(), target number " + baseNodes.size());
+  } else {
+    System.out.println("Does not find A.a()");
+  }
+  if(!childNodes.isEmpty()) {
+    System.out.println("Find target B.a(), target number " + childNodes.size());
+  } else {
+    System.out.println("Does not find B.a()");
+  }
+  
+}
+
+@Test
+public void testReflect29() throws WalaException, IllegalArgumentException, CancelException, IOException {
+  AnalysisScope scope = findOrCreateAnalysisScope();
+  IClassHierarchy cha = findOrCreateCHA(scope);
+  Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, "Lreflection/Reflect29");
+  AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
+  options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
+  CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+  CallGraph cg = builder.makeCallGraph(options, null);
+  verify(cg);
+}
 
   /**
    * Test that when analyzing Reflect10, the call graph includes a node for
@@ -633,7 +824,9 @@ public class ReflectionTest extends WalaTestCase {
     Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha,
         TestConstants.REFLECT23_MAIN);
     AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
-    CallGraph cg = CallGraphTestUtil.buildZeroOneCFA(options, new AnalysisCache(), cha, scope, false);
+    //CallGraph cg = CallGraphTestUtil.buildZeroOneCFA(options, new AnalysisCache(), cha, scope, false);
+    CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+    CallGraph cg = builder.makeCallGraph(options, null);
     TypeReference tr = TypeReference.findOrCreate(ClassLoaderReference.Application, "Lreflection/Helper");
     MethodReference mr = MethodReference.findOrCreate(tr, "u", "(Ljava/lang/Integer;)V");
     Set<CGNode> nodes = cg.getNodes(mr);

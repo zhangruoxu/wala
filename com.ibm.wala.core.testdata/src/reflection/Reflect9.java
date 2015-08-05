@@ -19,8 +19,16 @@ import java.lang.reflect.Method;
 public class Reflect9 {
   public static void main(String[] args) throws ClassNotFoundException, IllegalArgumentException, InstantiationException,
       IllegalAccessException, InvocationTargetException, SecurityException, NoSuchMethodException {
-    Class<?> c = Class.forName("java.lang.Integer");
+    /*Class<?> c = Class.forName("java.lang.Integer");
     Method m = c.getDeclaredMethod("toString", new Class[] {});
-    m.invoke(new Integer(2), new Object[] {});
+    m.invoke(new Integer(2), new Object[] {});*/
+    /*Class<?> c = Class.forName("reflection.A");
+    Object o = c.newInstance();
+    Method m = c.getMethod("foo");
+    m.invoke(o);*/
+    Class<?> clz = Class.forName("reflection.ZYF");
+    Object o = clz.newInstance();
+    Method m = clz.getMethod("foo", int.class);
+    m.invoke(o, 1);
   }
 }
