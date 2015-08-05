@@ -15,10 +15,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Properties;
-import java.util.Vector;
+import java.util.Set;
+
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -47,6 +48,7 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
+import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.WalaException;
@@ -93,8 +95,18 @@ public class PDFSlice {
    *      argument tells whether to compute a forwards or backwards slice. </ul>
    * 
    */
+  private Set<IR> sliceStmts;
+  private Set<IR> sliceStmtsNolineNo;
+
+
+  public PDFSlice() {
+    sliceStmts = new HashSet<IR>();
+    sliceStmtsNolineNo = new HashSet<IR>();
+  }
+
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
-    run(args);
+    PDFSlice slice = new PDFSlice();
+    slice.run(args);
   }
 
   /**
@@ -104,7 +116,7 @@ public class PDFSlice {
    * @throws IllegalArgumentException
    * @throws IOException
    */
-  public static void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
+  public void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
     // parse the command-line into a Properties object
     Properties p = CommandLine.parse(args);
     // validate that the command-line has the expected format
@@ -117,7 +129,7 @@ public class PDFSlice {
     } else {
       System.err.println("Ignore line number");
     }
-    
+
     // common slicing
     /*
      * run(p.getProperty("appJar"), p.getProperty("mainClass"),
@@ -136,13 +148,13 @@ public class PDFSlice {
   private static boolean goBackward(Properties p) {
     return !p.getProperty("dir", "backward").equals("forward");
   }
-  
-  public static Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber,
+
+  public Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber,
       boolean goBackward, DataDependenceOptions dOptions, ControlDependenceOptions cOptions) throws IllegalArgumentException,
       CancelException, IOException {
     Counter totalCounter = new Counter();
     totalCounter.begin();
-    
+
     System.out.println("data denpendence option " + dOptions.toString());
     System.out.println("control dependence option " + cOptions.toString());
     try {
@@ -152,19 +164,19 @@ public class PDFSlice {
           (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS));
 
       System.out.println("Build class hierarchy......");
- 
+
       Counter chaCounter = new Counter();
       chaCounter.begin();
       ClassHierarchy cha = ClassHierarchy.make(scope);
       chaCounter.end();
-      
+
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
       // Reflection option can be modified here
       options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
       String refOption = options.getReflectionOptions().toString();
       System.out.println("Reflection option " + refOption);
-      
+
       Counter cgCounter = new Counter();
       cgCounter.begin();
       // Pointer analysis can be modified here
@@ -186,7 +198,7 @@ public class PDFSlice {
       Collection<Statement> slice = null;
       if (goBackward) {
         System.out.println("Begin to slice......");
-        
+
         slice = Slicer.computeBackwardSlice(calleeStmt, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       } else {
         calleeStmt = getReturnStatementForCall(calleeStmt);
@@ -194,78 +206,76 @@ public class PDFSlice {
       }
       sliceCounter.end();
       totalCounter.end();
-     /* This part is used for myself convenience
-      * String fileName = "C:\\Users\\yifei\\Desktop\\results\\1.6\\PMD\\" + mainClass.replace('/', '.') + "." + srcCaller + "-"
-          + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
-      System.out.println(fileName);
-      SlicerTest.dumpSliceToFile(slice, fileName, calleeStmt);
 
-      String irFileNameAll = "C:\\Users\\yifei\\Desktop\\results\\1.6\\PMD\\" + mainClass.replace('/', '.') + "." + "all" + "."
-          + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".IR.txt";
-      File irFileAll = new File(irFileNameAll);
-      PrintWriter writerAll = new PrintWriter(irFileAll);
-      */
-      
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
       if(bm != null) {
         root += bm + File.separator;
       } else {
-        System.err.println("Benchmark name is not specified. Use " + root  + "output directory.");
+        System.out.println("Benchmark name is not specified. Use " + root  + "output directory.");
       }
-      
+
       File rootFile = new File(root);
       if(!rootFile.exists()) {
         rootFile.mkdirs();
       }
-      
-      String sliceStmts = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+
+      /*String sliceStmts = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
       SlicerTest.dumpSliceToFile(slice, sliceStmts, calleeStmt);
-      System.out.println(sliceStmts);
-      
-      String sliceIRAppFileName = root + mainClass.replace('/', '.') + "-" + "app" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".IR.txt";
+      System.out.println(sliceStmts);*/
+
+      String sliceIRAppFileName = root + mainClass.replace('/', '.') + "-" + "app" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
       File sliceIRApp = new File(sliceIRAppFileName);
       System.out.println(sliceIRAppFileName);
       PrintWriter writerApp = new PrintWriter(sliceIRApp);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
-      
-      // this container is used to save the statements without line number
-      Vector<String> mtdWithNoLineNo = new Vector<String>();
 
+      // this container is used to save the statements without line number
+      //Vector<String> stmtWithNoLineNo = new Vector<String>();
       // here fetch line number for each statement
       for (Statement stmt : slice) {
         // Primordial indicates library code? 
-        if (stmt.getNode().getMethod().toString().contains("Primordial")) {
-          Statement s = dumpStmtToFile(stmt, writerAll);
-          if (s != null) {
-            mtdWithNoLineNo.add(s.toString());
+        if (stmt.getNode().getMethod().getReference().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial)) {
+          IR ir = dumpStmtToFile(stmt, writerAll);
+          if(ir.lineNumber == -1) {
+            sliceStmtsNolineNo.add(ir);
+          } else {
+            sliceStmts.add(ir);
           }
           continue;
         } else {
-          Statement s = dumpStmtToFile(stmt, writerAll);
+          IR ir = dumpStmtToFile(stmt, writerAll);
           dumpStmtToFile(stmt, writerApp);
-          if (s != null) {
-            mtdWithNoLineNo.add(s.toString());
+          if(ir.lineNumber == -1) {
+            sliceStmtsNolineNo.add(ir);
+          } else {
+            sliceStmts.add(ir);
           }
         }
       }
       writerAll.close();
       writerApp.close();
 
-      Collections.sort(mtdWithNoLineNo);
-      /*System.err.println("###### Statements without line number: ");
-      for (String m : mtdWithNoLineNo) {
-        System.out.println(m);
-      }*/
+      if(!sliceStmtsNolineNo.isEmpty()) {
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+        File stmtNoLineNoFile = new File(stmtNoLineNo);
+        PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
+        for (IR m : sliceStmtsNolineNo) {
+          writerNoLineNo.println(m);
+        }
+        writerNoLineNo.close();
+      }
 
-     System.out.println("CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
-     System.out.println("Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
-     System.out.println("Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
-     System.out.println("Total time " + totalCounter.getMinute() + " minutes, or " + totalCounter.getSecond() + " seconds.");
-     
+      System.out.println("The number of statements with line number " + sliceStmts.size());
+      System.out.println("The number of statements without line number " + sliceStmtsNolineNo.size());
+      System.out.println("CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
+      System.out.println("Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
+      System.out.println("Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
+      System.out.println("Total time " + totalCounter.getMinute() + " minutes, or " + totalCounter.getSecond() + " seconds.");
+
       return null;
     } catch (WalaException e) {
       e.printStackTrace();
@@ -277,7 +287,8 @@ public class PDFSlice {
    * get line number in source code.
    * Return: the statement does not have corresponding line number
    */
-  public static Statement dumpStmtToFile(Statement stmt, PrintWriter writer) {
+  public IR dumpStmtToFile(Statement stmt, PrintWriter writer) {
+    int srcLineNumber = -1;
     // fetch line number for common statements
     IMethod method = stmt.getNode().getMethod();
     if (stmt instanceof StatementWithInstructionIndex) {
@@ -288,24 +299,24 @@ public class PDFSlice {
       if (method instanceof ShrikeBTMethod) {
         btMethod = (ShrikeBTMethod) method;
       } else {
-        //System.err.println("Is not ShrikeBTMethod " + method);
-        return stmt;
+        return new IR(method.getSignature(), srcLineNumber);
       }
       try {
         bcIndex = btMethod.getBytecodeIndex(instIndex);
       } catch (InvalidClassFileException e) {
         //System.err.println("cannot fetch line number for " + method);
-        return stmt;
+        //ir = new IR(btMethod.getSignature(), -1);
       } catch (ArrayIndexOutOfBoundsException aioobe) {
         //System.err.println("Bytecode index out of bound");
         //System.err.println("Method " + method);
-        return stmt;
+        //ir = new IR(btMethod.getSignature(), -1);
       }
-      int srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
+      srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
       writer.println(method.getSignature() + " {" + srcLineNumber + "}");
       //System.out.println(((StatementWithInstructionIndex) stmt).getInstruction() + " {" + srcLineNumber + "}");
       //System.out.println(method.getSignature() + " {" + srcLineNumber + "}");
-      return null;
+      //return null;
+      return new IR(method.getSignature(), srcLineNumber);
     }
     // fetch line number for catch statement
     if (stmt instanceof GetCaughtExceptionStatement) {
@@ -317,21 +328,23 @@ public class PDFSlice {
         bytecodeMethod = (IBytecodeMethod) method;
       } else {
         //System.err.println("Is not IBytecodeMethod " + method);
-        return stmt;
+        //ir = new IR(method.getSignature(), -1);
+        return new IR(method.getSignature(), srcLineNumber);
       }
 
       try {
         int bcIndex = bytecodeMethod.getBytecodeIndex(bb.getFirstInstructionIndex());
-        int lineNumber = bytecodeMethod.getLineNumber(bcIndex);
-        writer.println(bytecodeMethod.getSignature() + " {" + lineNumber + "}");
+        srcLineNumber = bytecodeMethod.getLineNumber(bcIndex);
+        writer.println(bytecodeMethod.getSignature() + " {" + srcLineNumber + "}");
         //System.err.println("catch statement line number " + bytecodeMethod.getSignature() + " {" + lineNumber + "}");
-        return null;
+        //ir = new IR(bytecodeMethod.getSignature(), srcLineNumber);
       } catch (InvalidClassFileException e) {
         //System.err.println("cannot fetch line number for " + bytecodeMethod);
-        return stmt;
+        //ir = new IR(method.getSignature(), -1);
       }
+      return new IR(method.getSignature(), srcLineNumber);
     }
-    return stmt;
+    return new IR(method.getSignature(), -1);
   }
 
   public static Statement getReturnStatementForCall(Statement s) {
@@ -372,23 +385,23 @@ public class PDFSlice {
 class Counter {
   private Date begin;
   private Date end;
-  
+
   public Counter() {
-    
+
   }
-  
+
   public void begin() {
     if(begin == null) {
       begin = new Date();
     }
   }
-  
+
   public void end() {
     if(end == null) {
       end = new Date();
     }
   }
-  
+
   public long getMinute() {
     if(isValid()) {
       long time = end.getTime() - begin.getTime();
@@ -397,7 +410,7 @@ class Counter {
       return -1;
     }
   }
-  
+
   public long getSecond() {
     if(isValid()) {
       long time = end.getTime() - begin.getTime();
@@ -405,10 +418,43 @@ class Counter {
     } else {
       return -1;
     }
-    
+
   }
-  
+
   private boolean isValid() {
     return begin != null && end != null;
+  }
+}
+
+class IR {
+  public String methodSignature;
+  public int lineNumber;
+
+  public IR() {
+  }
+
+  public IR(String _methodSignature, int _lineNumber) {
+    methodSignature = _methodSignature;
+    lineNumber = _lineNumber;
+  }
+
+  @Override
+  public String toString() {
+    return methodSignature + ": " + lineNumber;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof IR) {
+      IR ir = (IR) o;
+      return methodSignature.equals(ir.methodSignature)
+          && lineNumber == ir.lineNumber;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return toString().hashCode();
   }
 }
