@@ -11,7 +11,9 @@
 package com.ibm.wala.examples.drivers;
 
 import java.util.concurrent.TimeUnit;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
@@ -19,6 +21,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -103,7 +106,7 @@ public class PDFSlice {
   }
 
   public PDFSlice() {
-    
+
   }
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
@@ -161,9 +164,17 @@ public class PDFSlice {
     try {
       System.out.println("Run begins ...");
       // create an analysis scope representing the appJar as a J2SE application
-      AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar,
-          (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS));
-
+      File exclusionFile = (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
+      AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar, exclusionFile);
+      
+      System.out.println("These libraries are excluded > ");
+      BufferedReader reader = new BufferedReader(new FileReader(exclusionFile));
+      String temp = null;
+      while((temp = reader.readLine()) != null) {
+        System.out.println(temp);
+      }
+      reader.close();
+      
       System.out.println("Build class hierarchy......");
 
       Counter chaCounter = new Counter();
@@ -316,11 +327,10 @@ public class PDFSlice {
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
       if(srcLineNumber != -1) {
         writer.println(method.getSignature() + " {" + srcLineNumber + "}");
+        return new IR(method.getSignature(), srcLineNumber);
+      } else {
+        return new IR(method.getSignature(), -1);
       }
-      //System.out.println(((StatementWithInstructionIndex) stmt).getInstruction() + " {" + srcLineNumber + "}");
-      //System.out.println(method.getSignature() + " {" + srcLineNumber + "}");
-      //return null;
-      return new IR(method.getSignature(), srcLineNumber);
     }
     // fetch line number for catch statement
     if (stmt instanceof GetCaughtExceptionStatement) {
@@ -339,9 +349,10 @@ public class PDFSlice {
         srcLineNumber = bytecodeMethod.getLineNumber(bcIndex);
         if(srcLineNumber != -1) {
           writer.println(bytecodeMethod.getSignature() + " {" + srcLineNumber + "}");
+          return new IR(bytecodeMethod.getSignature(), srcLineNumber);
+        } else {
+          return new IR(bytecodeMethod.getSignature(), -1);
         }
-        //System.err.println("catch statement line number " + bytecodeMethod.getSignature() + " {" + lineNumber + "}");
-        return new IR(bytecodeMethod.getSignature(), srcLineNumber);
       } catch (InvalidClassFileException e) {
         //System.err.println("cannot fetch line number for " + bytecodeMethod);
         return new IR(method.getSignature(), -1);
