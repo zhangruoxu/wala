@@ -19,7 +19,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -95,18 +94,20 @@ public class PDFSlice {
    *      argument tells whether to compute a forwards or backwards slice. </ul>
    * 
    */
-  private Set<IR> sliceStmts;
-  private Set<IR> sliceStmtsNolineNo;
+  private static Set<IR> sliceStmts;
+  private static Set<IR> sliceStmtsNolineNo;
 
-
-  public PDFSlice() {
+  static {
     sliceStmts = new HashSet<IR>();
     sliceStmtsNolineNo = new HashSet<IR>();
   }
 
+  public PDFSlice() {
+    
+  }
+
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
-    PDFSlice slice = new PDFSlice();
-    slice.run(args);
+    PDFSlice.run(args);
   }
 
   /**
@@ -116,7 +117,7 @@ public class PDFSlice {
    * @throws IllegalArgumentException
    * @throws IOException
    */
-  public void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
+  public static void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
     // parse the command-line into a Properties object
     Properties p = CommandLine.parse(args);
     // validate that the command-line has the expected format
@@ -149,7 +150,7 @@ public class PDFSlice {
     return !p.getProperty("dir", "backward").equals("forward");
   }
 
-  public Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber,
+  public static Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber,
       boolean goBackward, DataDependenceOptions dOptions, ControlDependenceOptions cOptions) throws IllegalArgumentException,
       CancelException, IOException {
     Counter totalCounter = new Counter();
@@ -180,9 +181,9 @@ public class PDFSlice {
       Counter cgCounter = new Counter();
       cgCounter.begin();
       // Pointer analysis can be modified here
-      //CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
+      CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeZeroContainerCFABuilder(options, new AnalysisCache(), cha, scope);
-      CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      //CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
       System.out.println("Pointer analysis option: " + builder.getClass().getName());
       System.out.println("Make call graph......");
@@ -208,6 +209,7 @@ public class PDFSlice {
       totalCounter.end();
 
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
+      //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
       if(bm != null) {
         root += bm + File.separator;
       } else {
@@ -287,7 +289,7 @@ public class PDFSlice {
    * get line number in source code.
    * Return: the statement does not have corresponding line number
    */
-  public IR dumpStmtToFile(Statement stmt, PrintWriter writer) {
+  public static IR dumpStmtToFile(Statement stmt, PrintWriter writer) {
     int srcLineNumber = -1;
     // fetch line number for common statements
     IMethod method = stmt.getNode().getMethod();
@@ -299,20 +301,22 @@ public class PDFSlice {
       if (method instanceof ShrikeBTMethod) {
         btMethod = (ShrikeBTMethod) method;
       } else {
-        return new IR(method.getSignature(), srcLineNumber);
+        return new IR(method.getSignature(), -1);
       }
       try {
         bcIndex = btMethod.getBytecodeIndex(instIndex);
       } catch (InvalidClassFileException e) {
         //System.err.println("cannot fetch line number for " + method);
-        //ir = new IR(btMethod.getSignature(), -1);
+        return new IR(btMethod.getSignature(), -1);
       } catch (ArrayIndexOutOfBoundsException aioobe) {
         //System.err.println("Bytecode index out of bound");
         //System.err.println("Method " + method);
-        //ir = new IR(btMethod.getSignature(), -1);
+        return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
-      writer.println(method.getSignature() + " {" + srcLineNumber + "}");
+      if(srcLineNumber != -1) {
+        writer.println(method.getSignature() + " {" + srcLineNumber + "}");
+      }
       //System.out.println(((StatementWithInstructionIndex) stmt).getInstruction() + " {" + srcLineNumber + "}");
       //System.out.println(method.getSignature() + " {" + srcLineNumber + "}");
       //return null;
@@ -328,21 +332,20 @@ public class PDFSlice {
         bytecodeMethod = (IBytecodeMethod) method;
       } else {
         //System.err.println("Is not IBytecodeMethod " + method);
-        //ir = new IR(method.getSignature(), -1);
-        return new IR(method.getSignature(), srcLineNumber);
+        return new IR(method.getSignature(), -1);
       }
-
       try {
         int bcIndex = bytecodeMethod.getBytecodeIndex(bb.getFirstInstructionIndex());
         srcLineNumber = bytecodeMethod.getLineNumber(bcIndex);
-        writer.println(bytecodeMethod.getSignature() + " {" + srcLineNumber + "}");
+        if(srcLineNumber != -1) {
+          writer.println(bytecodeMethod.getSignature() + " {" + srcLineNumber + "}");
+        }
         //System.err.println("catch statement line number " + bytecodeMethod.getSignature() + " {" + lineNumber + "}");
-        //ir = new IR(bytecodeMethod.getSignature(), srcLineNumber);
+        return new IR(bytecodeMethod.getSignature(), srcLineNumber);
       } catch (InvalidClassFileException e) {
         //System.err.println("cannot fetch line number for " + bytecodeMethod);
-        //ir = new IR(method.getSignature(), -1);
+        return new IR(method.getSignature(), -1);
       }
-      return new IR(method.getSignature(), srcLineNumber);
     }
     return new IR(method.getSignature(), -1);
   }
