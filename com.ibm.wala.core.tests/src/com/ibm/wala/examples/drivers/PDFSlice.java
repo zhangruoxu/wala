@@ -11,17 +11,16 @@
 package com.ibm.wala.examples.drivers;
 
 import java.util.concurrent.TimeUnit;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
-
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -50,7 +49,6 @@ import com.ibm.wala.ssa.ISSABasicBlock;
 import com.ibm.wala.ssa.SSAAbstractInvokeInstruction;
 import com.ibm.wala.ssa.SSAInstruction;
 import com.ibm.wala.ssa.SSAInvokeInstruction;
-import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.TypeReference;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.WalaException;
@@ -101,15 +99,16 @@ public class PDFSlice {
   private static Set<IR> sliceStmtsNolineNo;
 
   static {
-    sliceStmts = new HashSet<IR>();
-    sliceStmtsNolineNo = new HashSet<IR>();
+    sliceStmts = new LinkedHashSet<IR>();
+    sliceStmtsNolineNo = new LinkedHashSet<IR>();
   }
 
   public PDFSlice() {
-
+    
   }
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
+    System.out.println("******* " + new Date());
     PDFSlice.run(args);
   }
 
@@ -174,34 +173,40 @@ public class PDFSlice {
         System.out.println(temp);
       }
       reader.close();
-      
+
       System.out.println("Build class hierarchy......");
 
       Counter chaCounter = new Counter();
       chaCounter.begin();
       ClassHierarchy cha = ClassHierarchy.make(scope);
       chaCounter.end();
+      
+      System.out.println("******* CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
 
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
       // Reflection option can be modified here
       options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
+      //for antlr
+      //options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
       String refOption = options.getReflectionOptions().toString();
       System.out.println("Reflection option " + refOption);
 
       Counter cgCounter = new Counter();
       cgCounter.begin();
       // Pointer analysis can be modified here
-      CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
+      //CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeZeroContainerCFABuilder(options, new AnalysisCache(), cha, scope);
-      //CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
       System.out.println("Pointer analysis option: " + builder.getClass().getName());
       System.out.println("Make call graph......");
       CallGraph cg = builder.makeCallGraph(options, null);
       cgCounter.end();
+      System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
       System.out.println("Begin to find criteria......");
+      System.out.println("Caller is " + srcCaller + ", callee is " + srcCallee);
       Statement calleeStmt = SlicerTest.findCallee(cg, srcCaller, srcCallee, calleeLineNumber);
       System.out.println("Statement: " + calleeStmt.toString());
 
@@ -218,6 +223,8 @@ public class PDFSlice {
       }
       sliceCounter.end();
       totalCounter.end();
+      System.out.println("******* Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
+      System.out.println("******* Total time " + totalCounter.getMinute() + " minutes, or " + totalCounter.getSecond() + " seconds.");
 
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
       //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
@@ -232,45 +239,29 @@ public class PDFSlice {
         rootFile.mkdirs();
       }
 
-      /*String sliceStmts = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
-      SlicerTest.dumpSliceToFile(slice, sliceStmts, calleeStmt);
-      System.out.println(sliceStmts);*/
-
-      String sliceIRAppFileName = root + mainClass.replace('/', '.') + "-" + "app" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
-      File sliceIRApp = new File(sliceIRAppFileName);
-      System.out.println(sliceIRAppFileName);
-      PrintWriter writerApp = new PrintWriter(sliceIRApp);
+      String sliceDump = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+      SlicerTest.dumpSliceToFile(slice, sliceDump, calleeStmt);
+      System.out.println(sliceDump);
 
       String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
 
-      // this container is used to save the statements without line number
-      //Vector<String> stmtWithNoLineNo = new Vector<String>();
-      // here fetch line number for each statement
       for (Statement stmt : slice) {
-        // Primordial indicates library code? 
-        if (stmt.getNode().getMethod().getReference().getDeclaringClass().getClassLoader().equals(ClassLoaderReference.Primordial)) {
-          IR ir = dumpStmtToFile(stmt, writerAll);
+          IR ir = dumpStmtToFile(stmt);
           if(ir.lineNumber == -1) {
             sliceStmtsNolineNo.add(ir);
           } else {
             sliceStmts.add(ir);
           }
-          continue;
-        } else {
-          IR ir = dumpStmtToFile(stmt, writerAll);
-          dumpStmtToFile(stmt, writerApp);
-          if(ir.lineNumber == -1) {
-            sliceStmtsNolineNo.add(ir);
-          } else {
-            sliceStmts.add(ir);
-          }
-        }
       }
+      
+      for(IR ir : sliceStmts) {
+        writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
+      }
+      
       writerAll.close();
-      writerApp.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
         String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
@@ -284,11 +275,6 @@ public class PDFSlice {
 
       System.out.println("The number of statements with line number " + sliceStmts.size());
       System.out.println("The number of statements without line number " + sliceStmtsNolineNo.size());
-      System.out.println("CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
-      System.out.println("Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
-      System.out.println("Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
-      System.out.println("Total time " + totalCounter.getMinute() + " minutes, or " + totalCounter.getSecond() + " seconds.");
-
       return null;
     } catch (WalaException e) {
       e.printStackTrace();
@@ -300,7 +286,7 @@ public class PDFSlice {
    * get line number in source code.
    * Return: the statement does not have corresponding line number
    */
-  public static IR dumpStmtToFile(Statement stmt, PrintWriter writer) {
+  public static IR dumpStmtToFile(Statement stmt) {
     int srcLineNumber = -1;
     // fetch line number for common statements
     IMethod method = stmt.getNode().getMethod();
@@ -317,20 +303,12 @@ public class PDFSlice {
       try {
         bcIndex = btMethod.getBytecodeIndex(instIndex);
       } catch (InvalidClassFileException e) {
-        //System.err.println("cannot fetch line number for " + method);
         return new IR(btMethod.getSignature(), -1);
       } catch (ArrayIndexOutOfBoundsException aioobe) {
-        //System.err.println("Bytecode index out of bound");
-        //System.err.println("Method " + method);
         return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
-      if(srcLineNumber != -1) {
-        writer.println(method.getSignature() + " {" + srcLineNumber + "}");
-        return new IR(method.getSignature(), srcLineNumber);
-      } else {
-        return new IR(method.getSignature(), -1);
-      }
+      return new IR(method.getSignature(), srcLineNumber);
     }
     // fetch line number for catch statement
     if (stmt instanceof GetCaughtExceptionStatement) {
@@ -341,20 +319,13 @@ public class PDFSlice {
       if (method instanceof IBytecodeMethod) {
         bytecodeMethod = (IBytecodeMethod) method;
       } else {
-        //System.err.println("Is not IBytecodeMethod " + method);
         return new IR(method.getSignature(), -1);
       }
       try {
         int bcIndex = bytecodeMethod.getBytecodeIndex(bb.getFirstInstructionIndex());
         srcLineNumber = bytecodeMethod.getLineNumber(bcIndex);
-        if(srcLineNumber != -1) {
-          writer.println(bytecodeMethod.getSignature() + " {" + srcLineNumber + "}");
-          return new IR(bytecodeMethod.getSignature(), srcLineNumber);
-        } else {
-          return new IR(bytecodeMethod.getSignature(), -1);
-        }
+        return new IR(method.getSignature(), srcLineNumber);
       } catch (InvalidClassFileException e) {
-        //System.err.println("cannot fetch line number for " + bytecodeMethod);
         return new IR(method.getSignature(), -1);
       }
     }

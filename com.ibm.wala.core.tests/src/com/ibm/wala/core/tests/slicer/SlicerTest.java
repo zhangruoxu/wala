@@ -919,7 +919,7 @@ public class SlicerTest {
     for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
       CGNode node = nodeIter.next();
       if(node.getMethod().getName().equals(a)) {
-        System.out.println("Caller found " + calleeName);
+        System.out.println("Caller found " + callerName);
         IR ir = node.getIR();
         for(Iterator<SSAInstruction> instIter = ir.iterateAllInstructions(); instIter.hasNext(); ) {
           SSAInstruction inst = instIter.next();
