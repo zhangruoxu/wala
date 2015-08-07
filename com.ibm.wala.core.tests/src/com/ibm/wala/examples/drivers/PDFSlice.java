@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.ibm.wala.examples.drivers;
 
-import java.util.concurrent.TimeUnit;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,6 +20,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
+
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -104,7 +104,7 @@ public class PDFSlice {
   }
 
   public PDFSlice() {
-    
+
   }
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
@@ -157,15 +157,12 @@ public class PDFSlice {
       CancelException, IOException {
     Counter totalCounter = new Counter();
     totalCounter.begin();
-
-    System.out.println("data denpendence option " + dOptions.toString());
-    System.out.println("control dependence option " + cOptions.toString());
     try {
       System.out.println("Run begins ...");
       // create an analysis scope representing the appJar as a J2SE application
       File exclusionFile = (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
       AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar, exclusionFile);
-      
+
       System.out.println("These libraries are excluded > ");
       BufferedReader reader = new BufferedReader(new FileReader(exclusionFile));
       String temp = null;
@@ -180,7 +177,7 @@ public class PDFSlice {
       chaCounter.begin();
       ClassHierarchy cha = ClassHierarchy.make(scope);
       chaCounter.end();
-      
+
       System.out.println("******* CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
 
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
@@ -206,7 +203,6 @@ public class PDFSlice {
       System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
       System.out.println("Begin to find criteria......");
-      System.out.println("Caller is " + srcCaller + ", callee is " + srcCallee);
       Statement calleeStmt = SlicerTest.findCallee(cg, srcCaller, srcCallee, calleeLineNumber);
       System.out.println("Statement: " + calleeStmt.toString());
 
@@ -249,18 +245,18 @@ public class PDFSlice {
       PrintWriter writerAll = new PrintWriter(silceIRAll);
 
       for (Statement stmt : slice) {
-          IR ir = dumpStmtToFile(stmt);
-          if(ir.lineNumber == -1) {
-            sliceStmtsNolineNo.add(ir);
-          } else {
-            sliceStmts.add(ir);
-          }
+        IR ir = dumpStmtToFile(stmt);
+        if(ir.lineNumber == -1) {
+          sliceStmtsNolineNo.add(ir);
+        } else {
+          sliceStmts.add(ir);
+        }
       }
-      
+
       for(IR ir : sliceStmts) {
         writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
       }
-      
+
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
@@ -364,82 +360,5 @@ public class PDFSlice {
     if (p.get("srcCaller") == null) {
       throw new UnsupportedOperationException("expected command-line to include -srcCaller");
     }
-  }
-}
-
-class Counter {
-  private Date begin;
-  private Date end;
-
-  public Counter() {
-
-  }
-
-  public void begin() {
-    if(begin == null) {
-      begin = new Date();
-    }
-  }
-
-  public void end() {
-    if(end == null) {
-      end = new Date();
-    }
-  }
-
-  public long getMinute() {
-    if(isValid()) {
-      long time = end.getTime() - begin.getTime();
-      return TimeUnit.MILLISECONDS.toMinutes(time);
-    } else {
-      return -1;
-    }
-  }
-
-  public long getSecond() {
-    if(isValid()) {
-      long time = end.getTime() - begin.getTime();
-      return TimeUnit.MILLISECONDS.toSeconds(time);
-    } else {
-      return -1;
-    }
-
-  }
-
-  private boolean isValid() {
-    return begin != null && end != null;
-  }
-}
-
-class IR {
-  public String methodSignature;
-  public int lineNumber;
-
-  public IR() {
-  }
-
-  public IR(String _methodSignature, int _lineNumber) {
-    methodSignature = _methodSignature;
-    lineNumber = _lineNumber;
-  }
-
-  @Override
-  public String toString() {
-    return methodSignature + ": " + lineNumber;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (o instanceof IR) {
-      IR ir = (IR) o;
-      return methodSignature.equals(ir.methodSignature)
-          && lineNumber == ir.lineNumber;
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return toString().hashCode();
   }
 }

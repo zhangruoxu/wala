@@ -932,8 +932,8 @@ public class SlicerTest {
                 int bcIndex = ((ShrikeBTMethod)node.getMethod()).getBytecodeIndex(indices.intIterator().next());
                 int lineNumber = node.getMethod().getLineNumber(bcIndex);
                 if(calleeLineNumber == 0 || calleeLineNumber == lineNumber) {
-                  System.err.println("####### caller method " + node.getMethod());
-                  System.err.println("####### line number " + lineNumber);
+                  System.out.println("####### caller method " + node.getMethod());
+                  System.out.println("####### line number " + lineNumber);
                   return new NormalStatement(node, indices.intIterator().next());
                 } else {
                   continue;
