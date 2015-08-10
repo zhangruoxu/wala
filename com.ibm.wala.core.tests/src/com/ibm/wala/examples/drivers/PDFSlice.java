@@ -10,8 +10,11 @@
  *******************************************************************************/
 package com.ibm.wala.examples.drivers;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -108,6 +111,8 @@ public class PDFSlice {
   }
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
+    System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
+        "WalaErr" + File.separator + "console.err")), true));
     System.out.println("******* " + new Date());
     PDFSlice.run(args);
   }
@@ -294,13 +299,17 @@ public class PDFSlice {
       if (method instanceof ShrikeBTMethod) {
         btMethod = (ShrikeBTMethod) method;
       } else {
+        System.err.println("+++++++ No line number. Method is " + method);
+        System.err.println("+++++++ No line number. Stmt is " + stmt);
         return new IR(method.getSignature(), -1);
       }
       try {
         bcIndex = btMethod.getBytecodeIndex(instIndex);
       } catch (InvalidClassFileException e) {
+        System.err.println("+++++++ Exception :" + method);
         return new IR(btMethod.getSignature(), -1);
       } catch (ArrayIndexOutOfBoundsException aioobe) {
+        System.err.println("+++++++ Exception :" + method);
         return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
@@ -325,6 +334,7 @@ public class PDFSlice {
         return new IR(method.getSignature(), -1);
       }
     }
+    System.err.println("+++++++Not the statements with line number. " + stmt);
     return new IR(method.getSignature(), -1);
   }
 

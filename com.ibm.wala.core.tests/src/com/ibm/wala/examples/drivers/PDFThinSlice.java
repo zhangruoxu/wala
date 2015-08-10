@@ -1,9 +1,12 @@
 package com.ibm.wala.examples.drivers;
 
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Date;
@@ -45,6 +48,8 @@ public class PDFThinSlice {
   }
   
   public static void main(String[] args) throws Exception {
+    System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
+        "CIWalaErr" + File.separator + "console.err")), true));
     System.out.println("******* " + new Date());
     run(args);    
   }
