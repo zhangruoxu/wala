@@ -111,8 +111,8 @@ public class PDFSlice {
   }
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
-    System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
-        "WalaErr" + File.separator + "console.err")), true));
+    //System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
+    //    "WalaErr" + File.separator + "console.err")), true));
     System.out.println("******* " + new Date());
     PDFSlice.run(args);
   }
@@ -188,9 +188,9 @@ public class PDFSlice {
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
       // Reflection option can be modified here
-      options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
+      //options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
       //for antlr
-      //options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
+      options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
       String refOption = options.getReflectionOptions().toString();
       System.out.println("Reflection option " + refOption);
 
@@ -207,6 +207,8 @@ public class PDFSlice {
       cgCounter.end();
       System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
+      SlicerTest.printCG(cg);
+      
       System.out.println("Begin to find criteria......");
       Statement calleeStmt = SlicerTest.findCallee(cg, srcCaller, srcCallee, calleeLineNumber);
       System.out.println("Statement: " + calleeStmt.toString());

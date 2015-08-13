@@ -914,6 +914,21 @@ public class SlicerTest {
     return null;
   }
 
+  public static void printCG(CallGraph cg) {
+    for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
+      CGNode node = nodeIter.next();
+      System.out.println(node.getMethod().getSignature());
+      /*IR ir = node.getIR();
+      for(Iterator<SSAInstruction> instIter = ir.iterateAllInstructions(); instIter.hasNext(); ) {
+        SSAInstruction inst = instIter.next();
+        if(inst instanceof SSAInvokeInstruction) {
+          SSAInvokeInstruction callee = (SSAInvokeInstruction) inst;
+          System.out.println(callee.getCallSite().getDeclaredTarget().getSignature());
+        }
+      }*/
+    }
+  }
+  
   public static Statement findCallee(CallGraph cg, String callerName, String calleeName, int calleeLineNumber) {
     Atom a = Atom.findOrCreateUnicodeAtom(callerName);
     for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
