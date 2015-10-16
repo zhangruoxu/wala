@@ -61,6 +61,7 @@ import com.ibm.wala.ssa.SSANewInstruction;
 import com.ibm.wala.ssa.SSAPutInstruction;
 import com.ibm.wala.types.ClassLoaderReference;
 import com.ibm.wala.types.Descriptor;
+import com.ibm.wala.types.TypeName;
 import com.ibm.wala.util.CancelException;
 import com.ibm.wala.util.debug.Assertions;
 import com.ibm.wala.util.graph.GraphIntegrity;
@@ -929,11 +930,14 @@ public class SlicerTest {
     }
   }
   
-  public static Statement findCallee(CallGraph cg, String callerName, String calleeName, int calleeLineNumber) {
-    Atom a = Atom.findOrCreateUnicodeAtom(callerName);
+  public static Statement findCall(CallGraph cg, String callerName, String calleeName, int calleeLineNumber) {
+    String[] callerInfo = callerName.split("\\."); // the callerInfo should be [typeName, methodName]
+    TypeName typeName = TypeName.findOrCreate(callerInfo[0]);
+    Atom methodName = Atom.findOrCreateUnicodeAtom(callerInfo[1]);
     for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
       CGNode node = nodeIter.next();
-      if(node.getMethod().getName().equals(a)) {
+      if(node.getMethod().getDeclaringClass().getName().equals(typeName)
+          && node.getMethod().getName().equals(methodName)) {
         System.out.println("Caller found " + callerName);
         IR ir = node.getIR();
         for(Iterator<SSAInstruction> instIter = ir.iterateAllInstructions(); instIter.hasNext(); ) {
@@ -965,6 +969,42 @@ public class SlicerTest {
       }
     }
     Assertions.UNREACHABLE("failed to find call to " + calleeName);
+    return null;
+  }
+  
+  public static Statement findFieldLoad(CallGraph cg, String callerName, String fieldSig, int loadLineNumber) {
+    String[] callerInfo = callerName.split("\\."); // the callerInfo should be [typeName, fieldName]
+    TypeName typeName = TypeName.findOrCreate(callerInfo[0]);
+    Atom methodName = Atom.findOrCreateUnicodeAtom(callerInfo[1]);
+    fieldSig = fieldSig.replace(':', ' ');
+    for(Iterator<? extends CGNode> nodeIter = cg.iterator(); nodeIter.hasNext();) {
+      CGNode node = nodeIter.next();
+      if(node.getMethod().getDeclaringClass().getName().equals(typeName)
+          && node.getMethod().getName().equals(methodName)) {
+        System.out.println("Caller found " + callerName);
+        IR ir = node.getIR();
+        SSAInstruction[] insts = ir.getInstructions();
+        for (int i = 0; i < insts.length; ++i) {
+          SSAInstruction s = insts[i];
+          if (s instanceof SSAGetInstruction) {
+            SSAGetInstruction fAcc = (SSAGetInstruction) s;
+            try {
+              int bcIndex = ((ShrikeBTMethod)node.getMethod()).getBytecodeIndex(i);
+              int lineNumber = node.getMethod().getLineNumber(bcIndex);
+              if (fAcc.getDeclaredField().getSignature().equals(fieldSig)
+                  && lineNumber == loadLineNumber) {
+                return new NormalStatement(node, i);
+              }
+            } catch (InvalidClassFileException e) {
+              // TODO Auto-generated catch block
+              e.printStackTrace();
+              System.err.println("No line number: " + node.getMethod().getSignature());
+            }
+          }
+        }
+      }
+    }
+    Assertions.UNREACHABLE("failed to find load to field " + fieldSig + " in ");
     return null;
   }
 

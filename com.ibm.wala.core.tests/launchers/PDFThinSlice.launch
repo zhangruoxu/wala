@@ -9,9 +9,7 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ibm.wala.examples.drivers.PDFThinSlice"/>
 
-<!--
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat-deps.jar -mainClass Ldacapo/bloat/Main -srcCaller printGraph -srcCallee println -dd full -cd full -calleeLineNumber 2180 -dir backward"/>
--->
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\Test\test\Test.class; -mainClass Ltest/Test -srcCaller Ltest/Test.main -srcCallee f -dd full -cd full -dir backward"/>
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat-deps.jar -mainClass Ldacapo/bloat/Main -srcCaller print -srcCallee print -dd full -cd full -dir backward"/>
@@ -29,9 +27,9 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat-deps.jar -mainClass LEDU/purdue/cs/bloat/tools/BloatBenchmark -srcCaller printGraph -srcCallee println -dd full -cd full -calleeLineNumber 2180 -dir backward"/>
 -->
 
-
+<!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller doEverything -srcCallee newInstance -dd full -cd full -calleeLineNumber 250 dir backward"/>
-
+-->
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller makeToken -srcCallee newInstance -dd full -cd full -calleeLineNumber 175 -dir backward"/>

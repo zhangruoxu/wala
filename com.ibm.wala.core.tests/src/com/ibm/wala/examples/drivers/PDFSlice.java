@@ -146,7 +146,7 @@ public class PDFSlice {
      * ControlDependenceOptions.FULL);
      */
     // CS thin slicing
-    run(p.getProperty("bm"), p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"),
+    run(p, p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"),
         calleeLineNumber, goBackward(p), DataDependenceOptions.NO_BASE_PTRS, ControlDependenceOptions.NONE);
   }
 
@@ -157,7 +157,7 @@ public class PDFSlice {
     return !p.getProperty("dir", "backward").equals("forward");
   }
 
-  public static Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber,
+  public static Process run(Properties args, String appJar, String mainClass, String srcCaller, String srcCallee, int lineNumber,
       boolean goBackward, DataDependenceOptions dOptions, ControlDependenceOptions cOptions) throws IllegalArgumentException,
       CancelException, IOException {
     Counter totalCounter = new Counter();
@@ -207,11 +207,18 @@ public class PDFSlice {
       cgCounter.end();
       System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
-      SlicerTest.printCG(cg);
+      //SlicerTest.printCG(cg);
       
       System.out.println("Begin to find criteria......");
-      Statement calleeStmt = SlicerTest.findCallee(cg, srcCaller, srcCallee, calleeLineNumber);
-      System.out.println("Statement: " + calleeStmt.toString());
+      Statement criterion = null;
+      if (srcCallee != null) {
+        System.out.println("Find call ......");
+        criterion = SlicerTest.findCall(cg, srcCaller, srcCallee, lineNumber);
+      } else {
+        System.out.println("Find field load ......");
+        criterion = SlicerTest.findFieldLoad(cg, srcCaller, args.getProperty("fieldSig"), lineNumber);
+      }
+      System.out.println("Statement: " + criterion.toString());
 
       Counter sliceCounter = new Counter();
       sliceCounter.begin();
@@ -219,10 +226,10 @@ public class PDFSlice {
       if (goBackward) {
         System.out.println("Begin to slice......");
 
-        slice = Slicer.computeBackwardSlice(calleeStmt, cg, builder.getPointerAnalysis(), dOptions, cOptions);
+        slice = Slicer.computeBackwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       } else {
-        calleeStmt = getReturnStatementForCall(calleeStmt);
-        slice = Slicer.computeForwardSlice(calleeStmt, cg, builder.getPointerAnalysis(), dOptions, cOptions);
+        criterion = getReturnStatementForCall(criterion);
+        slice = Slicer.computeForwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       }
       sliceCounter.end();
       totalCounter.end();
@@ -231,22 +238,26 @@ public class PDFSlice {
 
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
       //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
+      String bm = args.getProperty("bm");
       if(bm != null) {
         root += bm + File.separator;
       } else {
-        System.out.println("Benchmark name is not specified. Use " + root  + "output directory.");
+        System.out.println("Benchmark name is not specified. Use " + root  + " output directory.");
       }
 
       File rootFile = new File(root);
       if(!rootFile.exists()) {
         rootFile.mkdirs();
       }
-
-      String sliceDump = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
-      SlicerTest.dumpSliceToFile(slice, sliceDump, calleeStmt);
+      
+      String[] callerInfo = srcCaller.split("\\.");
+      String callerName = callerInfo[1];
+      
+      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+      SlicerTest.dumpSliceToFile(slice, sliceDump, criterion);
       System.out.println(sliceDump);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -267,7 +278,7 @@ public class PDFSlice {
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
-        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
         File stmtNoLineNoFile = new File(stmtNoLineNo);
         PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
         for (IR m : sliceStmtsNolineNo) {
@@ -366,8 +377,8 @@ public class PDFSlice {
     if (p.get("mainClass") == null) {
       throw new UnsupportedOperationException("expected command-line to include -mainClass");
     }
-    if (p.get("srcCallee") == null) {
-      throw new UnsupportedOperationException("expected command-line to include -srcCallee");
+    if (p.get("srcCallee") == null && p.get("fieldSig") == null) {
+      throw new UnsupportedOperationException("expected command-line to include -srcCallee or -fieldSig");
     }
     if (p.get("srcCaller") == null) {
       throw new UnsupportedOperationException("expected command-line to include -srcCaller");

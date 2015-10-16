@@ -109,7 +109,7 @@ public class PDFThinSlice {
     System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
     
     System.out.println("Begin to find criteria......");
-    Statement calleeStmt = SlicerTest.findCallee(cg, srcCaller, srcCallee, calleeLineNumber);
+    Statement calleeStmt = SlicerTest.findCall(cg, srcCaller, srcCallee, calleeLineNumber);
     System.out.println("Statement: " + calleeStmt);
 
     Counter sliceCounter = new Counter();

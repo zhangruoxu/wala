@@ -9,6 +9,8 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ibm.wala.examples.drivers.PDFSlice"/>
 
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -fieldSig Ltest/Test.s:Ljava/lang/String -calleeLineNumber 14 -dd full -cd full -dir backward"/>
+
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\test\Test.class; -mainClass LTest -srcCaller main -srcCallee println -dd full -cd full -dir backward"/>
  -->
@@ -21,9 +23,7 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\JLex.jar -mainClass LJLex/Main -srcCaller generate -srcCallee userDeclare -dd full -cd full -dir backward"/>
 -->
 
-<!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller doEverything -srcCallee newInstance -dd full -cd full -dir backward"/>
--->
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller makeToken -srcCallee newInstance -dd full -cd full -dir backward"/>
@@ -37,9 +37,9 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\luindex\luindex.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\luindex\luindex-deps.jar -mainClass Ldacapo/luindex/Main -srcCaller get -srcCallee newInstance -dd full -cd full -dir backward"/>
 -->
 
-
+<!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\avrora\avrora-beta-1.7.115.jar -mainClass Lavrora/Main -srcCaller getObjectOfClass -srcCallee newInstance -dd full -cd full -dir backward"/>
-
+-->
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\checkstyle\checkstyle-all-4.4.jar -mainClass Lcom/puppycrawl/tools/checkstyle/Main -srcCaller getHandler -srcCallee newInstance -dd full -cd full -dir backward"/>
