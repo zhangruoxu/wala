@@ -1,18 +1,18 @@
 package com.ibm.wala.examples.drivers;
 
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.io.PrintStream;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
 
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
@@ -47,10 +47,9 @@ public class PDFThinSlice {
     sliceStmtsNolineNo = new LinkedHashSet<IR>();
   }
   
-  public static void main(String[] args) throws Exception {
-    System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
-        "CIWalaErr" + File.separator + "console.err")), true));
-    System.out.println("******* " + new Date());
+  public static void main(String[] args) throws Exception {    
+//    System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + "Research" + File.separator + "ECOOP16" + File.separator + "WALA" + File.separator + "CIWalaErr" + File.separator + "console.err")), true));
+    System.out.println("******* CI Thin Slice begins at " + new Date());
     run(args);    
   }
 
@@ -64,10 +63,10 @@ public class PDFThinSlice {
       System.out.println("Ignore line number");
     }
 
-    run(p.getProperty("bm"), p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"), calleeLineNumber);
+    run(p, p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"), calleeLineNumber);
   }
 
-  public static Process run(String bm, String appJar, String mainClass, String srcCaller, String srcCallee, int calleeLineNumber) throws Exception {
+  public static Process run(Properties args, String appJar, String mainClass, String srcCaller, String srcCallee, int lineNumber) throws Exception {
     Counter totalCounter = new Counter();
     totalCounter.begin();
     System.out.println("Run begins ...");
@@ -93,6 +92,8 @@ public class PDFThinSlice {
     Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
     AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
     options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
+    //for antlr
+    //options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);    
     String refOption = options.getReflectionOptions().toString();
     System.out.println("Reflection option " + refOption);
     
@@ -109,13 +110,20 @@ public class PDFThinSlice {
     System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
     
     System.out.println("Begin to find criteria......");
-    Statement calleeStmt = SlicerTest.findCall(cg, srcCaller, srcCallee, calleeLineNumber);
-    System.out.println("Statement: " + calleeStmt);
+    Statement criterion = null;
+   if (srcCallee != null) {
+        System.out.println("Find call ......");
+        criterion = SlicerTest.findCall(cg, srcCaller, srcCallee, lineNumber);
+      } else {
+        System.out.println("Find field load ......");
+        criterion = SlicerTest.findFieldLoad(cg, srcCaller, args.getProperty("fieldSig"), lineNumber);
+      }
+    System.out.println("Statement: " + criterion);
 
     Counter sliceCounter = new Counter();
     sliceCounter.begin();
     ThinSlicer ts = new ThinSlicer(cg, builder.getPointerAnalysis());
-    Collection<Statement> slice = ts.computeBackwardThinSlice(calleeStmt);
+    Collection<Statement> slice = ts.computeBackwardThinSlice(criterion);
     sliceCounter.end();
     totalCounter.end();
     System.out.println("******* Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
@@ -123,21 +131,32 @@ public class PDFThinSlice {
     
     String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator + "CIThin" + File.separator;
     //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator + "CIThin" + File.separator;
+    String bm = args.getProperty("bm");
     if(bm != null) {
-      root += bm + File.separator;
-    } else {
-      System.out.println("Benchmark name is not specified. Use " + root  + "output directory.");
-    }
+        root += bm + File.separator;
+      } else {
+        System.out.println("Benchmark name is not specified. Use " + root  + " output directory.");
+      }
     
     File rootFile = new File(root);
     if(!rootFile.exists()) {
       rootFile.mkdirs();
     }
     
-    String sliceDump = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + refOption + ".txt";
-    SlicerTest.dumpSliceToFile(slice, sliceDump, calleeStmt);
+     String[] callerInfo = srcCaller.split("\\.");
+      String callerName = callerInfo[1];
+      String target = null;
+      if(srcCallee != null) {
+        target = srcCallee;
+      } else {
+        String[] fieldInfo = args.getProperty("fieldSig").split(":");
+        target = fieldInfo[0].replace("/", ".");
+      }
     
-    String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + refOption + ".IR.txt";
+    String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" +  refOption + ".txt";
+    SlicerTest.dumpSliceToFile(slice, sliceDump, criterion);
+    
+    String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + target + "-" + srcCallee + "-" + lineNumber + "-" + refOption + ".IR.txt";
     File silceIRAll = new File(silceIRAllFileName);
     System.out.println(silceIRAllFileName);
     PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -153,11 +172,12 @@ public class PDFThinSlice {
 
     for(IR ir : sliceStmts) {
       writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
+      System.out.println(ir.methodSignature + " {" + ir.lineNumber + "}");
     }
     writerAll.close();
     
     if(!sliceStmtsNolineNo.isEmpty()) {
-      String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + srcCaller + "-" + srcCallee + "-" + calleeLineNumber + "-" + refOption + ".txt";
+      String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + target + "-" + lineNumber + "-" + refOption + ".txt";
       File stmtNoLineNoFile = new File(stmtNoLineNo);
       PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
       for (IR m : sliceStmtsNolineNo) {
@@ -170,7 +190,7 @@ public class PDFThinSlice {
     return null;
   }
   
-  public static IR dumpStmtToFile(Statement stmt) {
+public static IR dumpStmtToFile(Statement stmt) {
     int srcLineNumber = -1;
     // fetch line number for common statements
     IMethod method = stmt.getNode().getMethod();
@@ -182,13 +202,17 @@ public class PDFThinSlice {
       if (method instanceof ShrikeBTMethod) {
         btMethod = (ShrikeBTMethod) method;
       } else {
+        System.err.println("+++++++ No line number. Method is " + method);
+        System.err.println("+++++++ No line number. Stmt is " + stmt);
         return new IR(method.getSignature(), -1);
       }
       try {
         bcIndex = btMethod.getBytecodeIndex(instIndex);
       } catch (InvalidClassFileException e) {
+        System.err.println("+++++++ Exception :" + method);
         return new IR(btMethod.getSignature(), -1);
       } catch (ArrayIndexOutOfBoundsException aioobe) {
+        System.err.println("+++++++ Exception :" + method);
         return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
@@ -213,6 +237,7 @@ public class PDFThinSlice {
         return new IR(method.getSignature(), -1);
       }
     }
+    System.err.println("+++++++Not the statements with line number. " + stmt);
     return new IR(method.getSignature(), -1);
   }
 }

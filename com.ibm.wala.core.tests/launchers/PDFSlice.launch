@@ -9,7 +9,11 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ibm.wala.examples.drivers.PDFSlice"/>
 
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -fieldSig Ltest/Test.s:Ljava/lang/String -calleeLineNumber 14 -dd full -cd full -dir backward"/>
+
+<!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class;C:\Users\yifei\Desktop\Test\test\A.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -fieldSig Ltest/Test.isOpen:Z -calleeLineNumber 28 -dd full -cd full -dir backward"/>-->
+
+<!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class;C:\Users\yifei\Desktop\Test\test\A.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -srcCallee println -calleeLineNumber 29 -dd full -cd full -dir backward"/>-->
+
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\test\Test.class; -mainClass LTest -srcCaller main -srcCallee println -dd full -cd full -dir backward"/>
@@ -22,8 +26,6 @@
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\JLex.jar -mainClass LJLex/Main -srcCaller generate -srcCallee userDeclare -dd full -cd full -dir backward"/>
 -->
-
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller doEverything -srcCallee newInstance -dd full -cd full -dir backward"/>
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -mainClass Lantlr/Tool -srcCaller makeToken -srcCallee newInstance -dd full -cd full -dir backward"/>
@@ -64,6 +66,27 @@
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar blah.jar -jarDir C:\Users\yifei\Desktop\PLDI'16\benchmarks\eclipse\plugins -mainClass Lorg/eclipse/core/runtime/adaptor/EclipseStarter -srcCaller loadConfigurators -srcCallee newInstance -dd full -cd full -dir backward"/>
 -->
+
+<!--
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\antlr\antlr-deps.jar -bm antlr -mainClass Lantlr/Tool -srcCaller Ljava/io/PrintWriter.println -calleeLineNumber 44 -fieldSig Ljava/io/PrintWriter.out:Ljava/io/Writer -dd full -cd full -dir backward"/>
+-->
+
+<!-- PMD -->
+<!--
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/DaCapo/pmd4.2.5/ -bm pmd -mainClass Lnet/sourceforge/pmd/PMD -srcCaller Lnet/sourceforge/pmd/renderers/XMLRenderer.start -srcCallee write -calleeLineNumber 31 -dir backward"/>
+-->
+
+<!-- Fop -->
+<!--
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/DaCapo/fop/ -bm fop -mainClass Lorg/apache/fop/apps/Fop -srcCaller Lorg/apache/fop/apps/CommandLineStarter.run -srcCallee getRendererOptions -calleeLineNumber 104 -dir backward"/>
+-->
+<!-- Avrora -->
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/avrora/ -bm avrora -mainClass Lavrora/Main -srcCaller Lavrora/monitors/EnergyMonitor$Monitor$Logger.write -srcCallee write -calleeLineNumber 232"/>
+
+
+<!--fop-->
+<!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/DaCapo/fop/ -bm fop -mainClass Lorg/apache/fop/apps/Fop -srcCaller Lorg/apache/fop/apps/CommandLineStarter.run -srcCallee getRendererOptions -calleeLineNumber 104 -dir backward"/>-->
+
 
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.ibm.wala.core.tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xss1g -Xmx6g -ea"/>

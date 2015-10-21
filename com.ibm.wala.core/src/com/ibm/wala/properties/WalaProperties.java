@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -91,6 +92,11 @@ public final class WalaProperties {
     int i = 0;
     for (File jarFile : col) {
       result[i++] = jarFile.getAbsolutePath();
+    }
+    System.out.println("JRE library > ");
+    Arrays.sort(result);
+    for(String s : result) {
+      System.out.println(s);
     }
     return result;
   }

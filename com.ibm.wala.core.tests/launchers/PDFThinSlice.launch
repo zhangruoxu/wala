@@ -9,7 +9,10 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.ibm.wala.examples.drivers.PDFThinSlice"/>
 
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\Test\test\Test.class; -mainClass Ltest/Test -srcCaller Ltest/Test.main -srcCallee f -dd full -cd full -dir backward"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class;C:\Users\yifei\Desktop\Test\test\A.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -fieldSig Ltest/Test.isOpen:Z -calleeLineNumber 28 -dd full -cd full -dir backward"/>
+
+<!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-bm test -appJar C:\Users\yifei\Desktop\Test\test\Test.class;C:\Users\yifei\Desktop\Test\test\A.class -mainClass Ltest/Test -srcCaller Ltest/Test.main -srcCallee println -calleeLineNumber 29 -dd full -cd full -dir backward"/>-->
+
 
 <!--
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat.jar;C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\bloat\bloat-deps.jar -mainClass Ldacapo/bloat/Main -srcCaller print -srcCallee print -dd full -cd full -dir backward"/>
@@ -64,6 +67,8 @@
 <!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-jarDir C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\pmd4.2.5 -bm pmd -mainClass Lnet/sourceforge/pmd/PMD -srcCaller doPMD -srcCallee processFiles -dd full -cd full -calleeLineNumber 364 -dir backward"/>-->
 
 <!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-appJar C:\Users\yifei\Desktop\PLDI'16\benchmarks\test\Test.class C:\Users\yifei\Desktop\PLDI'16\benchmarks\test\A.class  -bm pmd -mainClass LTest -srcCaller main -srcCallee add -dd full -cd full -calleeLineNumber 5 -dir backward"/>-->
+
+<!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-jarDir C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\pmd4.2.5 -bm pmd -mainClass Lnet/sourceforge/pmd/PMD -srcCaller doPMD -srcCallee setWriter -dd full -cd full -calleeLineNumber 346 -dir backward"/>-->
 
 <!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-jarDir C:\Users\yifei\Desktop\PLDI'16\benchmarks\DaCapo\pmd4.2.5 -bm pmd -mainClass Lnet/sourceforge/pmd/PMD -srcCaller doPMD -srcCallee setWriter -dd full -cd full -calleeLineNumber 346 -dir backward"/>-->
 

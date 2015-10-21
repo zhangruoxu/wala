@@ -991,6 +991,7 @@ public class SlicerTest {
             try {
               int bcIndex = ((ShrikeBTMethod)node.getMethod()).getBytecodeIndex(i);
               int lineNumber = node.getMethod().getLineNumber(bcIndex);
+              System.out.println("+++++++ " + fAcc.getDeclaredField().getSignature());
               if (fAcc.getDeclaredField().getSignature().equals(fieldSig)
                   && lineNumber == loadLineNumber) {
                 return new NormalStatement(node, i);

@@ -106,9 +106,7 @@ public class PDFSlice {
     sliceStmtsNolineNo = new LinkedHashSet<IR>();
   }
 
-  public PDFSlice() {
-
-  }
+  public PDFSlice() {}
 
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
     //System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
@@ -135,7 +133,7 @@ public class PDFSlice {
     if (strCalleeLineNumber != null) {
       calleeLineNumber = Integer.parseInt(p.getProperty("calleeLineNumber"));
     } else {
-      System.err.println("Ignore line number");
+      System.err.println("ine number is ignored.");
     }
 
     // common slicing
@@ -188,9 +186,9 @@ public class PDFSlice {
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
       // Reflection option can be modified here
-      //options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
+      options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
       //for antlr
-      options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
+      //options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
       String refOption = options.getReflectionOptions().toString();
       System.out.println("Reflection option " + refOption);
 
@@ -199,8 +197,18 @@ public class PDFSlice {
       // Pointer analysis can be modified here
       //CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeZeroContainerCFABuilder(options, new AnalysisCache(), cha, scope);
-      CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      // CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
       //CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
+
+      CallGraphBuilder builder = null;
+      String pta = args.getProperty("pta", "vanillaZeroOneCFA");
+      if (pta.equals("vanillaZeroOneCFA")) {
+        builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      } else if (pta.equals("zeroOneCFA")) {
+        builder = Util.makeZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      } else {
+        builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      }
       System.out.println("Pointer analysis option: " + builder.getClass().getName());
       System.out.println("Make call graph......");
       CallGraph cg = builder.makeCallGraph(options, null);
@@ -208,7 +216,7 @@ public class PDFSlice {
       System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
       //SlicerTest.printCG(cg);
-      
+
       System.out.println("Begin to find criteria......");
       Statement criterion = null;
       if (srcCallee != null) {
@@ -249,15 +257,21 @@ public class PDFSlice {
       if(!rootFile.exists()) {
         rootFile.mkdirs();
       }
-      
+
       String[] callerInfo = srcCaller.split("\\.");
       String callerName = callerInfo[1];
-      
-      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+      String target = null;
+      if(srcCallee != null) {
+        target = srcCallee;
+      } else {
+        String[] fieldInfo = args.getProperty("fieldSig").split(":");
+        target = fieldInfo[0].replace("/", ".");
+      }
+      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
       SlicerTest.dumpSliceToFile(slice, sliceDump, criterion);
       System.out.println(sliceDump);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + target + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -273,12 +287,13 @@ public class PDFSlice {
 
       for(IR ir : sliceStmts) {
         writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
+        System.out.println(ir.methodSignature + " {" + ir.lineNumber + "}");
       }
 
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
-        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
         File stmtNoLineNoFile = new File(stmtNoLineNo);
         PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
         for (IR m : sliceStmtsNolineNo) {
@@ -326,7 +341,10 @@ public class PDFSlice {
         return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
-      return new IR(method.getSignature(), srcLineNumber);
+      System.out.println(stmt);
+      IR ir = new IR(method.getSignature(), srcLineNumber);
+      System.out.println(ir);
+      return ir;
     }
     // fetch line number for catch statement
     if (stmt instanceof GetCaughtExceptionStatement) {

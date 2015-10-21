@@ -52,7 +52,6 @@ public class CommandLine {
     /**
      * 
      * added by Yifei
-     * 
      * add an option -jarDir. read all the jar files from given root directory
      * 
      * */
