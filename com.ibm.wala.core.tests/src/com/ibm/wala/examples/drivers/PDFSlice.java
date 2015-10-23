@@ -10,11 +10,8 @@
  *******************************************************************************/
 package com.ibm.wala.examples.drivers;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -111,7 +108,7 @@ public class PDFSlice {
   public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
     //System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
     //    "WalaErr" + File.separator + "console.err")), true));
-    System.out.println("******* " + new Date());
+    System.out.println("WALA started at " + new Date());
     PDFSlice.run(args);
   }
 
@@ -135,14 +132,6 @@ public class PDFSlice {
     } else {
       System.err.println("ine number is ignored.");
     }
-
-    // common slicing
-    /*
-     * run(p.getProperty("appJar"), p.getProperty("mainClass"),
-     * p.getProperty("srcCaller"), p.getProperty("srcCallee"), calleeLineNumber,
-     * goBackward(p), DataDependenceOptions.NO_HEAP,
-     * ControlDependenceOptions.FULL);
-     */
     // CS thin slicing
     run(p, p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"),
         calleeLineNumber, goBackward(p), DataDependenceOptions.NO_BASE_PTRS, ControlDependenceOptions.NONE);
@@ -181,7 +170,7 @@ public class PDFSlice {
       ClassHierarchy cha = ClassHierarchy.make(scope);
       chaCounter.end();
 
-      System.out.println("******* CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
+      System.out.println("CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
 
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
@@ -395,7 +384,7 @@ public class PDFSlice {
     if (p.get("mainClass") == null) {
       throw new UnsupportedOperationException("expected command-line to include -mainClass");
     }
-    if (p.get("srcCallee") == null && p.get("fieldSig") == null) {
+    if (p.get("srcCallee") == null) {
       throw new UnsupportedOperationException("expected command-line to include -srcCallee or -fieldSig");
     }
     if (p.get("srcCaller") == null) {
