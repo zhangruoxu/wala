@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -90,12 +93,33 @@ public class CSThinSlice {
     return !p.getProperty("dir", "backward").equals("forward");
   }
 
+  private static ReflectionOptions getReflectionOptions(String reflection) {
+    ReflectionOptions[] options = ReflectionOptions.class.getEnumConstants();
+    return Arrays.stream(options)
+        .filter(opt -> opt.getName().equals(reflection))
+        .findFirst()
+        .get();
+  }
+
+  private static Method getCallGraphBuilder(String pta) {
+    String mtdName = "make" + pta + "Builder";
+    Method mtd = null;
+    try {
+      mtd = Util.class.getMethod(mtdName, AnalysisOptions.class, AnalysisCache.class, ClassHierarchy.class, AnalysisScope.class);
+    } catch (NoSuchMethodException | SecurityException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return mtd;
+  }
+
   public static Process run(Properties p) throws IllegalArgumentException, CancelException, IOException {
     // slicing options
     String appJar = p.getProperty("appJar");
     String mainClass = p.getProperty("mainClass");
     String srcCaller = p.getProperty("srcCaller");
     String srcCallee = p.getProperty("srcCallee");
+    //process criterion line number
     int lineNumber = 0;
     String strCalleeLineNumber = p.getProperty("lineNumber");
     if (strCalleeLineNumber != null) {
@@ -106,9 +130,11 @@ public class CSThinSlice {
     boolean goBackward = goBackward(p);
     final DataDependenceOptions dOptions = DataDependenceOptions.NO_BASE_PTRS;
     final ControlDependenceOptions cOptions = ControlDependenceOptions.NONE;
-    
-    Counter totalCounter = new Counter();
-    totalCounter.begin();
+    final ReflectionOptions refOpt = getReflectionOptions(p.getProperty("reflection", "no_flow_to_casts"));
+    System.out.println("Reflection option " + refOpt.getName());
+
+    Counter overallCounter = new Counter();
+    overallCounter.begin();
     try {
       System.out.println("Run begins ...");
       // create an analysis scope representing the appJar as a J2SE application
@@ -124,57 +150,38 @@ public class CSThinSlice {
       reader.close();
 
       System.out.println("Build class hierarchy......");
-
       Counter chaCounter = new Counter();
       chaCounter.begin();
       ClassHierarchy cha = ClassHierarchy.make(scope);
       chaCounter.end();
-
       System.out.println("CHA time " + chaCounter.getMinute() + " minutes, or " + chaCounter.getSecond() + " seconds.");
 
       Iterable<Entrypoint> entrypoints = com.ibm.wala.ipa.callgraph.impl.Util.makeMainEntrypoints(scope, cha, mainClass);
       AnalysisOptions options = CallGraphTestUtil.makeAnalysisOptions(scope, entrypoints);
-      // Reflection option can be modified here
-      options.setReflectionOptions(ReflectionOptions.NO_FLOW_TO_CASTS);
-      //for antlr
-      //options.setReflectionOptions(ReflectionOptions.APPLICATION_GET_METHOD);
-      String refOption = options.getReflectionOptions().toString();
-      System.out.println("Reflection option " + refOption);
+      options.setReflectionOptions(refOpt);
 
       Counter cgCounter = new Counter();
       cgCounter.begin();
-      // Pointer analysis can be modified here
-      //CallGraphBuilder builder = Util.makeZeroCFABuilder(options, new AnalysisCache(), cha, scope);
-      //CallGraphBuilder builder = Util.makeZeroContainerCFABuilder(options, new AnalysisCache(), cha, scope);
-      // CallGraphBuilder builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
-      //CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
-
-      CallGraphBuilder builder = null;
       String pta = p.getProperty("pta", "vanillaZeroOneCFA");
-      if (pta.equals("vanillaZeroOneCFA")) {
-        builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
-      } else if (pta.equals("zeroOneCFA")) {
-        builder = Util.makeZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
-      } else {
-        builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
+      Method mtd = getCallGraphBuilder(pta);
+      CallGraphBuilder builder = null;
+      try {
+        builder = (CallGraphBuilder)mtd.invoke(options, new AnalysisCache(), cha, scope);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        e.printStackTrace();
       }
       System.out.println("Pointer analysis option: " + builder.getClass().getName());
+
       System.out.println("Make call graph......");
       CallGraph cg = builder.makeCallGraph(options, null);
       cgCounter.end();
-      System.out.println("******* Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
+      System.out.println("Call graph construction time " + cgCounter.getMinute() + " minutes, or " + cgCounter.getSecond() + " seconds.");
 
-      //SlicerTest.printCG(cg);
-
-      System.out.println("Begin to find criteria......");
+      System.out.println("Begin to find criterion......");
       Statement criterion = null;
-      if (srcCallee != null) {
-        System.out.println("Find call ......");
-        criterion = SlicerTest.findCall(cg, srcCaller, srcCallee, lineNumber);
-      } else {
-        System.out.println("Find field load ......");
-        criterion = SlicerTest.findFieldLoad(cg, srcCaller, p.getProperty("fieldSig"), lineNumber);
-      }
+
+      System.out.println("Find call ......");
+      criterion = SlicerTest.findCall(cg, srcCaller, srcCallee, lineNumber);
       System.out.println("Statement: " + criterion.toString());
 
       Counter sliceCounter = new Counter();
@@ -182,16 +189,15 @@ public class CSThinSlice {
       Collection<Statement> slice = null;
       if (goBackward) {
         System.out.println("Begin to slice......");
-
         slice = Slicer.computeBackwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       } else {
         criterion = getReturnStatementForCall(criterion);
         slice = Slicer.computeForwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       }
       sliceCounter.end();
-      totalCounter.end();
-      System.out.println("******* Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
-      System.out.println("******* Total time " + totalCounter.getMinute() + " minutes, or " + totalCounter.getSecond() + " seconds.");
+      overallCounter.end();
+      System.out.println("Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
+      System.out.println("Total time " + overallCounter.getMinute() + " minutes, or " + overallCounter.getSecond() + " seconds.");
 
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
       //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
@@ -201,12 +207,10 @@ public class CSThinSlice {
       } else {
         System.out.println("Benchmark name is not specified. Use " + root  + " output directory.");
       }
-
       File rootFile = new File(root);
       if(!rootFile.exists()) {
         rootFile.mkdirs();
       }
-
       String[] callerInfo = srcCaller.split("\\.");
       String callerName = callerInfo[1];
       String target = null;
@@ -216,11 +220,11 @@ public class CSThinSlice {
         String[] fieldInfo = p.getProperty("fieldSig").split(":");
         target = fieldInfo[0].replace("/", ".");
       }
-      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + ".txt";
       SlicerTest.dumpSliceToFile(slice, sliceDump, criterion);
       System.out.println(sliceDump);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + target + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + "-IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + target + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -242,7 +246,7 @@ public class CSThinSlice {
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
-        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + ".txt";
         File stmtNoLineNoFile = new File(stmtNoLineNo);
         PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
         for (IR m : sliceStmtsNolineNo) {
