@@ -38,6 +38,7 @@ import com.ibm.wala.ipa.callgraph.CallGraphBuilder;
 import com.ibm.wala.ipa.callgraph.Entrypoint;
 import com.ibm.wala.ipa.callgraph.impl.Util;
 import com.ibm.wala.ipa.cha.ClassHierarchy;
+import com.ibm.wala.ipa.cha.IClassHierarchy;
 import com.ibm.wala.ipa.slicer.GetCaughtExceptionStatement;
 import com.ibm.wala.ipa.slicer.NormalReturnCaller;
 import com.ibm.wala.ipa.slicer.NormalStatement;
@@ -105,7 +106,7 @@ public class CSThinSlice {
     String mtdName = "make" + pta + "Builder";
     Method mtd = null;
     try {
-      mtd = Util.class.getMethod(mtdName, AnalysisOptions.class, AnalysisCache.class, ClassHierarchy.class, AnalysisScope.class);
+      mtd = Util.class.getMethod(mtdName, AnalysisOptions.class, AnalysisCache.class, IClassHierarchy.class, AnalysisScope.class);
     } catch (NoSuchMethodException | SecurityException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -125,7 +126,7 @@ public class CSThinSlice {
     if (strCalleeLineNumber != null) {
       lineNumber = Integer.parseInt(p.getProperty("lineNumber"));
     } else {
-      System.err.println("ine number is ignored.");
+      System.err.println("Line number is ignored.");
     }
     boolean goBackward = goBackward(p);
     final DataDependenceOptions dOptions = DataDependenceOptions.NO_BASE_PTRS;
@@ -162,11 +163,11 @@ public class CSThinSlice {
 
       Counter cgCounter = new Counter();
       cgCounter.begin();
-      String pta = p.getProperty("pta", "vanillaZeroOneCFA");
+      String pta = p.getProperty("pta", "VanillaZeroOneCFA");
       Method mtd = getCallGraphBuilder(pta);
       CallGraphBuilder builder = null;
       try {
-        builder = (CallGraphBuilder)mtd.invoke(options, new AnalysisCache(), cha, scope);
+        builder = (CallGraphBuilder)mtd.invoke(null, options, new AnalysisCache(), cha, scope);
       } catch (IllegalAccessException | InvocationTargetException e) {
         e.printStackTrace();
       }
