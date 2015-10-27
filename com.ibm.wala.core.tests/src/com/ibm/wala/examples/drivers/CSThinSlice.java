@@ -56,45 +56,7 @@ import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.io.CommandLine;
 import com.ibm.wala.util.io.FileProvider;
 
-/**
- * 
- * This simple example WALA application computes a slice (see {@link Slicer})
- * and fires off the PDF viewer to view a dot-ted representation of the slice.
- * 
- * This is an example program on how to use the slicer.
- * 
- * See the 'PDFSlice' launcher included in the 'launchers' directory.
- * 
- * @see Slicer
- * @author sfink
- */
 public class CSThinSlice {
-
-  /**
-   * Usage: PDFSlice -appJar [jar file name] -mainClass [main class] -srcCaller
-   * [method name] -srcCallee [method name] -dd [data dependence options] -cd
-   * [control dependence options] -dir [forward|backward]
-   * 
-   * <ul>
-   * <li>"jar file name" should be something like
-   * "c:/temp/testdata/java_cup.jar"
-   * <li>"main class" should beshould be something like
-   * "c:/temp/testdata/java_cup.jar"
-   * <li>"method name" should be the name of a method. This takes a slice from
-   * the statement that calls "srcCallee" from "srcCaller"
-   * <li>"data dependence options" can be one of "-full", "-no_base_ptrs",
-   * "-no_base_no_heap", "-no_heap", "-no_base_no_heap_no_cast", or "-none".
-   * </ul>
-   * 
-   * @throws CancelException
-   * @throws IllegalArgumentException
-   * @throws IOException
-   * 
-   * @see com.ibm.wala.ipa.slicer.Slicer.DataDependenceOptions <li>
-   *      "control dependence options" can be "-full" or "-none" <li>the -dir
-   *      argument tells whether to compute a forwards or backwards slice. </ul>
-   * 
-   */
   private static Set<IR> sliceStmts;
   private static Set<IR> sliceStmtsNolineNo;
 
@@ -112,29 +74,13 @@ public class CSThinSlice {
     CSThinSlice.run(args);
   }
 
-  /**
-   * see {@link #main(String[])} for command-line arguments
-   * 
-   * @throws CancelException
-   * @throws IllegalArgumentException
-   * @throws IOException
-   */
   public static void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
     // parse the command-line into a Properties object
     Properties p = CommandLine.parse(args);
     // validate that the command-line has the expected format
-    validateCommandLine(p);
-    // 0 indicates ignore line number
-    int calleeLineNumber = 0;
-    String strCalleeLineNumber = p.getProperty("calleeLineNumber");
-    if (strCalleeLineNumber != null) {
-      calleeLineNumber = Integer.parseInt(p.getProperty("calleeLineNumber"));
-    } else {
-      System.err.println("ine number is ignored.");
-    }
+    validateCommandLine(p); 
     // CS thin slicing
-    run(p, p.getProperty("appJar"), p.getProperty("mainClass"), p.getProperty("srcCaller"), p.getProperty("srcCallee"),
-        calleeLineNumber, goBackward(p), DataDependenceOptions.NO_BASE_PTRS, ControlDependenceOptions.NONE);
+    run(p);
   }
 
   /**
@@ -144,9 +90,23 @@ public class CSThinSlice {
     return !p.getProperty("dir", "backward").equals("forward");
   }
 
-  public static Process run(Properties args, String appJar, String mainClass, String srcCaller, String srcCallee, int lineNumber,
-      boolean goBackward, DataDependenceOptions dOptions, ControlDependenceOptions cOptions) throws IllegalArgumentException,
-      CancelException, IOException {
+  public static Process run(Properties p) throws IllegalArgumentException, CancelException, IOException {
+    // slicing options
+    String appJar = p.getProperty("appJar");
+    String mainClass = p.getProperty("mainClass");
+    String srcCaller = p.getProperty("srcCaller");
+    String srcCallee = p.getProperty("srcCallee");
+    int lineNumber = 0;
+    String strCalleeLineNumber = p.getProperty("lineNumber");
+    if (strCalleeLineNumber != null) {
+      lineNumber = Integer.parseInt(p.getProperty("lineNumber"));
+    } else {
+      System.err.println("ine number is ignored.");
+    }
+    boolean goBackward = goBackward(p);
+    final DataDependenceOptions dOptions = DataDependenceOptions.NO_BASE_PTRS;
+    final ControlDependenceOptions cOptions = ControlDependenceOptions.NONE;
+    
     Counter totalCounter = new Counter();
     totalCounter.begin();
     try {
@@ -190,7 +150,7 @@ public class CSThinSlice {
       //CallGraphBuilder builder = Util.makeVanillaZeroOneContainerCFABuilder(options, new AnalysisCache(), cha, scope);
 
       CallGraphBuilder builder = null;
-      String pta = args.getProperty("pta", "vanillaZeroOneCFA");
+      String pta = p.getProperty("pta", "vanillaZeroOneCFA");
       if (pta.equals("vanillaZeroOneCFA")) {
         builder = Util.makeVanillaZeroOneCFABuilder(options, new AnalysisCache(), cha, scope);
       } else if (pta.equals("zeroOneCFA")) {
@@ -213,7 +173,7 @@ public class CSThinSlice {
         criterion = SlicerTest.findCall(cg, srcCaller, srcCallee, lineNumber);
       } else {
         System.out.println("Find field load ......");
-        criterion = SlicerTest.findFieldLoad(cg, srcCaller, args.getProperty("fieldSig"), lineNumber);
+        criterion = SlicerTest.findFieldLoad(cg, srcCaller, p.getProperty("fieldSig"), lineNumber);
       }
       System.out.println("Statement: " + criterion.toString());
 
@@ -235,7 +195,7 @@ public class CSThinSlice {
 
       String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
       //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
-      String bm = args.getProperty("bm");
+      String bm = p.getProperty("bm");
       if(bm != null) {
         root += bm + File.separator;
       } else {
@@ -253,7 +213,7 @@ public class CSThinSlice {
       if(srcCallee != null) {
         target = srcCallee;
       } else {
-        String[] fieldInfo = args.getProperty("fieldSig").split(":");
+        String[] fieldInfo = p.getProperty("fieldSig").split(":");
         target = fieldInfo[0].replace("/", ".");
       }
       String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOption + ".txt";
