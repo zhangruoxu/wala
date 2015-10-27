@@ -38,7 +38,7 @@ import com.ibm.wala.util.config.AnalysisScopeReader;
 import com.ibm.wala.util.io.CommandLine;
 import com.ibm.wala.util.io.FileProvider;
 
-public class PDFThinSlice {
+public class CIThinSlice {
   private static Set<IR> sliceStmts;
   private static Set<IR> sliceStmtsNolineNo;
 

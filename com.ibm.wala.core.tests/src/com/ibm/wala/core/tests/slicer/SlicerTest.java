@@ -27,7 +27,7 @@ import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
 import com.ibm.wala.core.tests.callGraph.CallGraphTestUtil;
 import com.ibm.wala.core.tests.util.TestConstants;
-import com.ibm.wala.examples.drivers.PDFSlice;
+import com.ibm.wala.examples.drivers.CSThinSlice;
 import com.ibm.wala.ipa.callgraph.AnalysisCache;
 import com.ibm.wala.ipa.callgraph.AnalysisOptions;
 import com.ibm.wala.ipa.callgraph.AnalysisScope;
@@ -185,7 +185,7 @@ public class SlicerTest {
 
     CGNode main = findMainMethod(cg);
     Statement s = findCallTo(main, "foo");
-    s = PDFSlice.getReturnStatementForCall(s);
+    s = CSThinSlice.getReturnStatementForCall(s);
     System.err.println("Statement: " + s);
     // compute a data slice
     Collection<Statement> slice = Slicer.computeForwardSlice(s, cg, builder.getPointerAnalysis(), DataDependenceOptions.FULL,
@@ -208,7 +208,7 @@ public class SlicerTest {
 
     CGNode n = findMethod(cg, "baz");
     Statement s = findCallTo(n, "foo");
-    s = PDFSlice.getReturnStatementForCall(s);
+    s = CSThinSlice.getReturnStatementForCall(s);
     System.err.println("Statement: " + s);
     // compute a data slice
     Collection<Statement> slice = Slicer.computeForwardSlice(s, cg, builder.getPointerAnalysis(), DataDependenceOptions.FULL,
