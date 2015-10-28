@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -96,10 +97,12 @@ public class CSThinSlice {
 
   private static ReflectionOptions getReflectionOptions(String reflection) {
     ReflectionOptions[] options = ReflectionOptions.class.getEnumConstants();
-    return Arrays.stream(options)
-        .filter(opt -> opt.getName().equals(reflection))
-        .findFirst()
-        .get();
+    for(ReflectionOptions opt : options) {
+      if(opt.getName().equals(reflection)) {
+        return opt;
+      }
+    }
+    return null;
   }
 
   private static Method getCallGraphBuilder(String pta) {
@@ -107,8 +110,10 @@ public class CSThinSlice {
     Method mtd = null;
     try {
       mtd = Util.class.getMethod(mtdName, AnalysisOptions.class, AnalysisCache.class, IClassHierarchy.class, AnalysisScope.class);
-    } catch (NoSuchMethodException | SecurityException e) {
+    } catch (NoSuchMethodException e) {
       // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (SecurityException e) {
       e.printStackTrace();
     }
     return mtd;
@@ -168,8 +173,10 @@ public class CSThinSlice {
       CallGraphBuilder builder = null;
       try {
         builder = (CallGraphBuilder)mtd.invoke(null, options, new AnalysisCache(), cha, scope);
-      } catch (IllegalAccessException | InvocationTargetException e) {
+      } catch (IllegalAccessException e) {
         e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        // TODO: handle exception
       }
       System.out.println("Pointer analysis option: " + builder.getClass().getName());
 
