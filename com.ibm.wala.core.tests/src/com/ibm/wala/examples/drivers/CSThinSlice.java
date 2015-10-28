@@ -221,18 +221,11 @@ public class CSThinSlice {
       }
       String[] callerInfo = srcCaller.split("\\.");
       String callerName = callerInfo[1];
-      String target = null;
-      if(srcCallee != null) {
-        target = srcCallee;
-      } else {
-        String[] fieldInfo = p.getProperty("fieldSig").split(":");
-        target = fieldInfo[0].replace("/", ".");
-      }
-      String sliceDump = root + mainClass.replace('/', '.') + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + ".txt";
-      SlicerTest.dumpSliceToFile(slice, sliceDump, criterion);
-      System.out.println(sliceDump);
+      String sliceDumpFileName = root + mainClass.replace('/', '.') + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
+      SlicerTest.dumpSliceToFile(slice, sliceDumpFileName, criterion);
+      System.out.println(sliceDumpFileName);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + target + "-" + srcCallee + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + "-IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -254,7 +247,7 @@ public class CSThinSlice {
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
-        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + target + "-" + lineNumber + "-" + dOptions + "-" + cOptions + "-" + refOpt.getName() + ".txt";
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
         File stmtNoLineNoFile = new File(stmtNoLineNo);
         PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
         for (IR m : sliceStmtsNolineNo) {
