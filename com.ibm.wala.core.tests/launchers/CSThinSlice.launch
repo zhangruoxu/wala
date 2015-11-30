@@ -12,7 +12,7 @@
 <!--<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/DaCapo/pmd4.2.5/ -bm pmd -mainClass Lnet/sourceforge/pmd/PMD -srcCaller Lnet/sourceforge/pmd/renderers/XMLRenderer.start -srcCallee write -lineNumber 31 -dir backward -reflection no_flow_to_casts -pta VanillaZeroOneCFA"/>-->
 
 <!--Fop-->
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/PLDI'16/benchmarks/fop-0.20.5 --bm FOP -mainClass Lorg/apache/fop/apps/Fop -srcCaller Lorg/apache/fop/apps/CommandLineStarter.run -srcCallee getOutputFile -lineNumber 101 -dir backward"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value=" -jarDir C:/Users/yifei/Desktop/Research/ECOOP'16/benchmarks/fop-0.20.5 --bm FOP -mainClass Lorg/apache/fop/apps/Fop -srcCaller Lorg/apache/fop/apps/CommandLineStarter.run -srcCallee getOutputFile -lineNumber 101 -dir backward"/>
 
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.ibm.wala.core.tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xss1g -Xmx6g -ea"/>
