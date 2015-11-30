@@ -150,10 +150,7 @@ public class CSThinSlice {
     try {
       System.out.println("Run begins ...");
       // create an analysis scope representing the appJar as a J2SE application
-      URL url = FileProvider.class.getClassLoader().getResource(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
-      String fileName = url.toString().substring(url.toString().indexOf("/") + 1);
-      File exclusionFile = new File(fileName);
-      System.out.println("####### Exclusion file Name: " +fileName);
+      File exclusionFile = (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
       AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar, exclusionFile);
 
       System.out.println("These libraries are excluded > ");
