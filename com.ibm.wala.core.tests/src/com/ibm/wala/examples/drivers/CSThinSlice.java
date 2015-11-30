@@ -226,13 +226,11 @@ public class CSThinSlice {
       if(!rootFile.exists()) {
         rootFile.mkdirs();
       }
-      String[] callerInfo = srcCaller.split("\\.");
-      String callerName = callerInfo[1];
-      String sliceDumpFileName = root + mainClass.replace('/', '.') + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
+      String sliceDumpFileName = root + mainClass.replace('/', '.') + "-" + srcCaller + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
       SlicerTest.dumpSliceToFile(slice, sliceDumpFileName, criterion);
       System.out.println(sliceDumpFileName);
 
-      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + "-IR.txt";
+      String silceIRAllFileName = root + mainClass.replace('/', '.') + "-" + "all" + "-" + srcCaller + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + "-IR.txt";
       File silceIRAll = new File(silceIRAllFileName);
       System.out.println(silceIRAllFileName);
       PrintWriter writerAll = new PrintWriter(silceIRAll);
@@ -254,7 +252,7 @@ public class CSThinSlice {
       writerAll.close();
 
       if(!sliceStmtsNolineNo.isEmpty()) {
-        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + callerName + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
+        String stmtNoLineNo = root + mainClass.replace('/', '.') + "-" + "NoLineNo"  + "-" + srcCaller + "-" + srcCallee + "-" + lineNumber + "-" + refOpt.getName() + ".txt";
         File stmtNoLineNoFile = new File(stmtNoLineNo);
         PrintWriter writerNoLineNo = new PrintWriter(stmtNoLineNoFile);
         for (IR m : sliceStmtsNolineNo) {
