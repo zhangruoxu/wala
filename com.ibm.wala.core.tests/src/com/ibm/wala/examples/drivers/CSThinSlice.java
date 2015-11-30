@@ -17,11 +17,9 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -72,11 +70,17 @@ public class CSThinSlice {
 
   public CSThinSlice() {}
 
-  public static void main(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
+  public static void main(String[] args) {
     //System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(System.getProperty("user.home") + File.separator + 
     //    "WalaErr" + File.separator + "console.err")), true));
     System.out.println("WALA started at " + new Date());
-    CSThinSlice.run(args);
+    try { 
+      CSThinSlice.run(args);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      System.out.println("WALA ends at " + new Date());
+    }
   }
 
   public static void run(String[] args) throws WalaException, IllegalArgumentException, CancelException, IOException {
@@ -134,6 +138,7 @@ public class CSThinSlice {
       System.err.println("Line number is ignored.");
     }
     boolean goBackward = goBackward(p);
+    System.out.println("Compute backward slice.");
     final DataDependenceOptions dOptions = DataDependenceOptions.NO_BASE_PTRS;
     final ControlDependenceOptions cOptions = ControlDependenceOptions.NONE;
     final ReflectionOptions refOpt = getReflectionOptions(p.getProperty("reflection", "no_flow_to_casts"));
@@ -178,7 +183,7 @@ public class CSThinSlice {
       } catch (InvocationTargetException e) {
         // TODO: handle exception
       }
-      System.out.println("Pointer analysis option: " + builder.getClass().getName());
+      System.out.println("Pointer analysis option: " + mtd.getName());
 
       System.out.println("Make call graph......");
       CallGraph cg = builder.makeCallGraph(options, null);
@@ -199,16 +204,18 @@ public class CSThinSlice {
         System.out.println("Begin to slice......");
         slice = Slicer.computeBackwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
       } else {
-        criterion = getReturnStatementForCall(criterion);
-        slice = Slicer.computeForwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
+        // criterion = getReturnStatementForCall(criterion);
+        // slice = Slicer.computeForwardSlice(criterion, cg, builder.getPointerAnalysis(), dOptions, cOptions);
+        System.out.println("Slice must be backward.");
+        System.exit(0);
       }
       sliceCounter.end();
       overallCounter.end();
       System.out.println("Slice time " + sliceCounter.getMinute() + " minutes, or " + sliceCounter.getSecond() + " seconds.");
       System.out.println("Total time " + overallCounter.getMinute() + " minutes, or " + overallCounter.getSecond() + " seconds.");
 
-      String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
-      //String root = ".." + File.separator + ".." + File.separator + "output" + File.separator;
+      //String root = System.getProperty("user.home") + File.separator + "walaOutput" + File.separator;
+      String root = ".." + File.separator + ".." + File.separator + "output" + File.separator + "final" + File.separator;
       String bm = p.getProperty("bm");
       if(bm != null) {
         root += bm + File.separator;
@@ -241,7 +248,7 @@ public class CSThinSlice {
 
       for(IR ir : sliceStmts) {
         writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
-        System.out.println(ir.methodSignature + " {" + ir.lineNumber + "}");
+        //System.out.println(ir.methodSignature + " {" + ir.lineNumber + "}");
       }
 
       writerAll.close();
@@ -295,10 +302,7 @@ public class CSThinSlice {
         return new IR(btMethod.getSignature(), -1);
       }
       srcLineNumber = stmt.getNode().getMethod().getLineNumber(bcIndex);
-      System.out.println(stmt);
-      IR ir = new IR(method.getSignature(), srcLineNumber);
-      System.out.println(ir);
-      return ir;
+      return new IR(method.getSignature(), srcLineNumber);
     }
     // fetch line number for catch statement
     if (stmt instanceof GetCaughtExceptionStatement) {
@@ -319,7 +323,7 @@ public class CSThinSlice {
         return new IR(method.getSignature(), -1);
       }
     }
-    System.err.println("+++++++Not the statements with line number. " + stmt);
+    //System.err.println("+++++++Not the statements with line number. " + stmt);
     return new IR(method.getSignature(), -1);
   }
 
