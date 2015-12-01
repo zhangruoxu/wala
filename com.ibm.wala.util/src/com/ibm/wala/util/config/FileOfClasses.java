@@ -54,7 +54,7 @@ public class FileOfClasses extends SetOfClasses implements Serializable {
       this.regex = regex.toString();
       needsCompile = true;
     }
-
+    System.out.println(regex);
     is.close();
   }
 
