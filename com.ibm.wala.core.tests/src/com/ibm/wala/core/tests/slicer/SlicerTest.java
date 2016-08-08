@@ -15,15 +15,16 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
 import com.ibm.wala.core.tests.callGraph.CallGraphTestUtil;
 import com.ibm.wala.core.tests.util.TestConstants;
@@ -929,8 +930,9 @@ public class SlicerTest {
       }*/
     }
   }
-  
+
   public static Statement findCall(CallGraph cg, String callerName, String calleeName, int calleeLineNumber) {
+    List<String> callees = Arrays.asList("println", "debug", "error", "getOutputFile", "write", "print");
     String[] callerInfo = callerName.split("\\."); // the callerInfo should be [typeName, methodName]
     TypeName typeName = TypeName.findOrCreate(callerInfo[0]);
     Atom methodName = Atom.findOrCreateUnicodeAtom(callerInfo[1]);
@@ -944,7 +946,8 @@ public class SlicerTest {
           SSAInstruction inst = instIter.next();
           if(inst instanceof SSAInvokeInstruction) {
             SSAInvokeInstruction callee = (SSAInvokeInstruction)inst;
-            if(callee.getCallSite().getDeclaredTarget().getName().toString().equals(calleeName)) {
+            //if(callee.getCallSite().getDeclaredTarget().getName().toString().equals(calleeName)) {
+            if(callees.contains(callee.getCallSite().getDeclaredTarget().getName().toString())) {
               IntSet indices = ir.getCallInstructionIndices(callee.getCallSite());
               Assertions.productionAssertion(indices.size() == 1, "expected 1 but got " + indices.size());
               try {
@@ -971,7 +974,7 @@ public class SlicerTest {
     Assertions.UNREACHABLE("failed to find call to " + calleeName);
     return null;
   }
-  
+
   public static Statement findFieldLoad(CallGraph cg, String callerName, String fieldSig, int loadLineNumber) {
     String[] callerInfo = callerName.split("\\."); // the callerInfo should be [typeName, fieldName]
     TypeName typeName = TypeName.findOrCreate(callerInfo[0]);

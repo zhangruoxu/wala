@@ -10,10 +10,6 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Properties;
 import java.util.Set;
-import java.io.PrintStream;
-import java.io.FileOutputStream;
-import java.io.BufferedOutputStream;
-
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
 import com.ibm.wala.classLoader.ShrikeBTMethod;
@@ -67,11 +63,13 @@ public class CIThinSlice {
   }
 
   public static Process run(Properties args, String appJar, String mainClass, String srcCaller, String srcCallee, int lineNumber) throws Exception {
+    PrintWriter log = new PrintWriter(new File("log.txt"));
     Counter totalCounter = new Counter();
     totalCounter.begin();
     System.out.println("Run begins ...");
     
     File exclusionFile = (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
+    System.out.println("#### " + exclusionFile.getName());
     AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar, exclusionFile);
     
     System.out.println("These libraries are excluded > ");

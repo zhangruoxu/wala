@@ -1,6 +1,6 @@
 package com.ibm.wala.examples.drivers;
 
-public class IR {
+public class IR implements Comparable<IR> {
   public String methodSignature;
   public int lineNumber;
 
@@ -30,5 +30,14 @@ public class IR {
   @Override
   public int hashCode() {
     return toString().hashCode();
+  }
+
+  @Override
+  public int compareTo(IR ir) {
+    if(!methodSignature.equals(ir.methodSignature)) {
+      return methodSignature.compareTo(ir.methodSignature);
+    } else {
+      return new Integer(lineNumber).compareTo(ir.lineNumber);
+    }
   }
 }

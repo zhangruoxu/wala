@@ -18,11 +18,16 @@ import java.io.FileReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+
+import org.apache.tools.ant.taskdefs.optional.XMLValidateTask.Property;
 
 import com.ibm.wala.classLoader.IBytecodeMethod;
 import com.ibm.wala.classLoader.IMethod;
@@ -63,10 +68,13 @@ import com.ibm.wala.util.io.FileProvider;
 public class CSThinSlice {
   private static Set<IR> sliceStmts;
   private static Set<IR> sliceStmtsNolineNo;
-
+  private static String color;
+  private static PrintWriter timeWriter;
+  private static String scFileName;
   static {
     sliceStmts = new LinkedHashSet<IR>();
     sliceStmtsNolineNo = new LinkedHashSet<IR>();
+    
   }
 
   public CSThinSlice() {}
@@ -93,6 +101,21 @@ public class CSThinSlice {
     run(p);
   }
 
+  private static void processColor(Properties p) {
+    String output = p.getProperty("output");
+    if (output.contains("case-1")) {
+      color = ANSIColor.RED;
+    } else if (output.contains("case-2")) {
+      color = ANSIColor.YELLOW;
+    } else if (output.contains("case-3")) {
+      color = ANSIColor.PURPLE;
+    } else if (output.contains("case-4")) {
+      color = ANSIColor.GREEN;
+    } else {
+      color = ANSIColor.WHITE;
+    }
+  }
+  
   /**
    * Should the slice be a backwards slice?
    */
@@ -103,7 +126,7 @@ public class CSThinSlice {
   private static ReflectionOptions getReflectionOptions(String reflection) {
     ReflectionOptions[] options = ReflectionOptions.class.getEnumConstants();
     for(ReflectionOptions opt : options) {
-      if(opt.getName().equals(reflection)) {
+      if(opt.getName().toLowerCase().equals(reflection.toLowerCase())) {
         return opt;
       }
     }
@@ -130,6 +153,8 @@ public class CSThinSlice {
     String mainClass = p.getProperty("mainClass");
     String srcCaller = p.getProperty("srcCaller");
     String srcCallee = p.getProperty("srcCallee");
+    processColor(p);
+    System.out.println("####### " + srcCaller);
     //process criterion line number
     int lineNumber = 0;
     String strCalleeLineNumber = p.getProperty("lineNumber");
@@ -151,6 +176,8 @@ public class CSThinSlice {
       System.out.println("Run begins ...");
       // create an analysis scope representing the appJar as a J2SE application
       File exclusionFile = (new FileProvider()).getFile(CallGraphTestUtil.REGRESSION_EXCLUSIONS);
+      System.out.println("#######" + exclusionFile.getAbsolutePath());
+      System.out.println("####### " + exclusionFile.getAbsolutePath());
       AnalysisScope scope = AnalysisScopeReader.makeJavaBinaryAnalysisScope(appJar, exclusionFile);
 
       System.out.println("These libraries are excluded > ");
@@ -237,7 +264,7 @@ public class CSThinSlice {
       PrintWriter writerAll = new PrintWriter(silceIRAll);
 
       for (Statement stmt : slice) {
-        IR ir = dumpStmtToFile(stmt);
+        IR ir = stmt2IR(stmt);
         if(ir.lineNumber == -1) {
           sliceStmtsNolineNo.add(ir);
         } else {
@@ -245,7 +272,9 @@ public class CSThinSlice {
         }
       }
 
-      for(IR ir : sliceStmts) {
+      List<IR> irList = new ArrayList<>(sliceStmts);
+      Collections.sort(irList);
+      for(IR ir : irList) {
         writerAll.println(ir.methodSignature + " {" + ir.lineNumber + "}");
         //System.out.println(ir.methodSignature + " {" + ir.lineNumber + "}");
       }
@@ -275,7 +304,7 @@ public class CSThinSlice {
    * get line number in source code.
    * Return: the statement does not have corresponding line number
    */
-  public static IR dumpStmtToFile(Statement stmt) {
+  public static IR stmt2IR(Statement stmt) {
     int srcLineNumber = -1;
     // fetch line number for common statements
     IMethod method = stmt.getNode().getMethod();

@@ -93,7 +93,7 @@ public final class WalaProperties {
     for (File jarFile : col) {
       result[i++] = jarFile.getAbsolutePath();
     }
-    System.out.println("JRE library > ");
+    // System.out.println("JRE library > ");
     Arrays.sort(result);
     for(String s : result) {
       System.out.println(s);
